@@ -95,7 +95,7 @@
         </div>
       </div>
 
-      <!-- 🔍 กล่องค้นหาและกรองข้อมูล (อัปเดตใหม่) -->
+      <!-- 🔍 กล่องค้นหาและกรองข้อมูล (Advanced Filter) -->
       <div class="card p-3 mb-3 bg-white shadow-sm border border-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h6 class="text-secondary fw-bold mb-0" style="font-size: 0.95rem;"><i class="fas fa-filter me-1"></i> ตัวกรองข้อมูล</h6>
@@ -103,7 +103,6 @@
         </div>
         
         <div class="row g-2">
-          <!-- กล่องค้นหาหลัก -->
           <div class="col-12">
             <div class="input-group input-group-sm">
               <span class="input-group-text bg-light text-muted"><i class="fas fa-search"></i></span>
@@ -111,7 +110,6 @@
             </div>
           </div>
           
-          <!-- ตัวกรองแถวที่ 2 -->
           <div class="col-6">
             <select id="filter-status" class="form-select form-select-sm bg-light" onchange="applyFilters()">
               <option value="">-- ทุกสถานะ --</option>
@@ -128,14 +126,12 @@
             </select>
           </div>
           
-          <!-- กล่องเลือกกอง (สำหรับ Manager/Admin) -->
           <div class="col-6" id="manager-div-filter-container" style="display: none;">
             <select id="filter-division" class="form-select form-select-sm bg-light text-primary fw-bold border-primary" onchange="applyFilters()">
               <option value="">ดูทุกกอง (ทั้งหมด)</option>
             </select>
           </div>
 
-          <!-- Switch สำหรับ Reporter -->
           <div class="col-12" id="reporter-toggle-container" style="display: none;">
             <div class="form-check form-switch mt-1 p-2 bg-light rounded border">
               <input class="form-check-input ms-1" type="checkbox" id="reporter-toggle" onchange="applyFilters()">
@@ -220,7 +216,25 @@
     =============================================== -->
     <div id="page-register" class="page-section card p-4 shadow-sm">
       <div class="text-center mb-4"><i class="fas fa-user-plus text-primary" style="font-size: 3rem;"></i><h4 class="text-primary fw-bold mt-2">ลงทะเบียนใช้งาน</h4></div>
-      <form id="registerForm" onsubmit="handleRegister(event)"><input type="hidden" id="reg-uid" name="uid"><div class="mb-3"><label class="form-label fw-bold">ชื่อ-นามสกุล (LINE)</label><input type="text" class="form-control bg-light" id="reg-name" name="name" required readonly></div><div class="mb-4"><label class="form-label fw-bold">สังกัด (กอง)</label><select class="form-select" id="reg-division" name="division" required></select></div><button type="submit" id="btnRegister" class="btn btn-line w-100 py-3 fw-bold shadow-sm">ส่งคำขอลงทะเบียน</button></form>
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <input type="hidden" id="reg-uid" name="uid">
+        
+        <!-- ข้อมูลส่วนตัว (อัปเดตใหม่) -->
+        <div class="mb-3">
+          <label class="form-label text-muted small fw-bold mb-1">Username (LINE Profile)</label>
+          <input type="text" class="form-control bg-light text-muted" id="reg-linename" name="lineName" required readonly>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold mb-1">ชื่อ-นามสกุลจริง <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="reg-fullname" name="fullName" placeholder="เช่น สมชาย ใจดี" required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-bold mb-1">สังกัด (กอง) <span class="text-danger">*</span></label>
+          <select class="form-select" id="reg-division" name="division" required></select>
+        </div>
+        
+        <button type="submit" id="btnRegister" class="btn btn-line w-100 py-3 fw-bold shadow-sm">ส่งคำขอลงทะเบียน</button>
+      </form>
     </div>
     
     <div id="page-pending" class="page-section card p-5 text-center shadow-sm"><i class="fas fa-hourglass-half text-warning mb-3" style="font-size: 4rem;"></i><h4 class="text-warning fw-bold mb-3">รอการอนุมัติ</h4><p class="text-muted">ระบบได้รับข้อมูลของคุณแล้ว<br>ขณะนี้กำลังรอผู้ดูแลระบบอนุมัติสิทธิ์ครับ</p></div>
@@ -264,6 +278,7 @@
     let userRole = "";
     let userDivision = "";
     let userUid = "";
+    let userNameReal = ""; // เก็บชื่อจริงไว้ใช้เป็น ownerName
 
     const wonKeywords = ["ได้งานแล้ว", "ลงนาม", "เซ็นสัญญา", "win", "success"];
     const pendingKeywords = ["อยู่ระหว่างการพิจารณาผล", "พิจารณา", "กำลังพิจารณา", "pending"];
@@ -288,19 +303,21 @@
           if(!data.isRegistered) {
             showPage('page-register');
             document.getElementById('reg-uid').value = userProfile.userId;
-            document.getElementById('reg-name').value = userProfile.displayName;
+            document.getElementById('reg-linename').value = userProfile.displayName; // แสดงชื่อ LINE
             loadDropdowns('reg-division');
           } else if(data.status === 'Pending') { showPage('page-pending');
           } else if(data.status === 'Rejected') { showPage('page-rejected');
           } else if (data.status === 'Approved') {
             userRole = data.role; userDivision = data.division; userUid = uid;
-
+            
+            // ดึงชื่อจริงมาแสดง และไว้ใช้บันทึกงานใหม่
+            userNameReal = data.name || userProfile.displayName;
             document.getElementById('staff-uid').value = userProfile.userId;
-            document.getElementById('staff-name').value = userProfile.displayName;
+            document.getElementById('staff-name').value = userNameReal; 
             document.getElementById('form-division').value = data.division; 
             
             document.getElementById('header-profile').style.display = 'block';
-            document.getElementById('header-role').innerText = `${userProfile.displayName} (${userRole})`;
+            document.getElementById('header-role').innerText = `${userNameReal} (${userRole})`;
             document.getElementById('dash-division').innerText = (userRole === 'Manager' || userRole === 'Admin') ? "ภาพรวม (ทุกกอง)" : data.division;
             
             if(userRole === 'Reporter') document.getElementById('reporter-toggle-container').style.display = 'block';
@@ -329,7 +346,7 @@
         const result = await res.json();
         if(result.success) {
           globalPipelines = sortPipelines(result.data);
-          extractUniqueYears(globalPipelines); // สร้าง Dropdown ปีงบประมาณอัตโนมัติ
+          extractUniqueYears(globalPipelines);
           applyFilters(); 
         }
       } catch(e) { Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error'); }
@@ -354,13 +371,11 @@
       });
     }
 
-    // ฟังก์ชันสกัดปีงบประมาณอัตโนมัติมาใส่ Dropdown
     function extractUniqueYears(data) {
       const years = [...new Set(data.map(item => item.fiscalYear))].filter(Boolean).sort().reverse();
       populateSelect('filter-year', years, true, "-- ทุกปีงบประมาณ --");
     }
 
-    // รีเซ็ตตัวกรองทั้งหมด
     function resetFilters() {
       document.getElementById('search-text').value = '';
       document.getElementById('filter-status').value = '';
@@ -371,7 +386,6 @@
       applyFilters();
     }
 
-    // ระบบค้นหาและกรอง (Advanced Filters)
     function applyFilters() {
       let filtered = globalPipelines;
       
@@ -380,7 +394,6 @@
       const probFilter = document.getElementById('filter-probability').value;
       const yearFilter = document.getElementById('filter-year').value;
 
-      // กรองจาก Text (ครอบคลุม ชื่อโครงการ, ลูกค้า, ประเทศ)
       if (searchText) {
         filtered = filtered.filter(p => 
           (p.projectName && p.projectName.toLowerCase().includes(searchText)) || 
@@ -389,12 +402,10 @@
         );
       }
       
-      // กรองตาม Dropdown ต่างๆ
       if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
       if (probFilter) filtered = filtered.filter(p => p.probability === probFilter);
       if (yearFilter) filtered = filtered.filter(p => String(p.fiscalYear) === String(yearFilter));
       
-      // กรองตามสิทธิ์
       if (userRole === 'Reporter' && document.getElementById('reporter-toggle').checked) {
         filtered = filtered.filter(p => p.uid === userUid);
       }
@@ -473,7 +484,7 @@
       return num.toLocaleString('th-TH');
     }
 
-    // Export Excel 
+    // Export Excel แบบ Professional (ส่งออกเฉพาะข้อมูลที่ Filter มาแล้ว)
     function exportToExcel() {
       if(currentFilteredData.length === 0) {
         Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลสำหรับส่งออก Excel', 'warning'); return;
@@ -489,7 +500,7 @@
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pipeline");
+        XLSX.utils.book_append_sheet(wb, ws, "Pipeline_Data");
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
         XLSX.writeFile(wb, `Pipeline_Export_${dateStr}.xlsx`);
         Swal.close();
@@ -498,12 +509,12 @@
 
     function openForm(mode, projectId = "", projectOwnerUid = "") {
       if (mode === 'edit' && userRole !== 'Admin' && userRole !== 'Manager') {
-        if (projectOwnerUid !== userUid) { Swal.fire('สิทธิ์ไม่เพียงพอ', 'อัปเดตได้เฉพาะโครงการที่คุณสร้างเท่านั้น', 'error'); return; }
+        if (projectOwnerUid !== userUid) { Swal.fire('สิทธิ์ไม่เพียงพอ', 'สามารถอัปเดตได้เฉพาะโครงการที่คุณเป็นผู้สร้างเท่านั้น', 'error'); return; }
       }
       const form = document.getElementById('pipelineForm'); form.reset(); 
       const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.disabled = false;
       document.getElementById('staff-uid').value = userProfile.userId;
-      document.getElementById('staff-name').value = userProfile.displayName;
+      document.getElementById('staff-name').value = userNameReal; // ใช้ชื่อจริงที่ดึงมา
       
       if(mode === 'new') {
         document.getElementById('form-division').value = userDivision; 
@@ -545,7 +556,9 @@
       } catch(e) { Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error'); btnSubmit.disabled = false; }
     }
 
-    // Admin Functions
+    // ==========================================
+    // ⚙️ Admin Control Panel
+    // ==========================================
     async function loadAdminPanel() {
       Swal.fire({ title: 'กำลังโหลดข้อมูลผู้ใช้...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
       try {
@@ -565,9 +578,17 @@
         let statusBadge = u.status === 'Pending' ? '<span class="badge bg-warning text-dark shadow-sm">รออนุมัติ</span>' : 
                          (u.status === 'Rejected' ? '<span class="badge bg-dark shadow-sm">ระงับสิทธิ์</span>' : `<span class="badge bg-success shadow-sm">ใช้งานปกติ</span>`);
         
+        let lineNameHtml = u.lineName ? `<div class="text-success small mt-1"><i class="fab fa-line"></i> ${u.lineName}</div>` : '';
+                         
         let cardHtml = `
           <div class="card user-card p-3 shadow-sm" onclick="openAdminUserModal('${u.uid}', '${safeName}', '${u.division}', '${u.role}', '${u.status}')">
-            <div class="d-flex justify-content-between align-items-center mb-1"><h6 class="mb-0 fw-bold"><i class="fas fa-user text-muted me-2"></i>${u.name}</h6>${statusBadge}</div>
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <div>
+                <h6 class="mb-0 fw-bold"><i class="fas fa-user text-primary me-2"></i>${u.name}</h6>
+                ${lineNameHtml}
+              </div>
+              ${statusBadge}
+            </div>
             <div class="d-flex justify-content-between text-muted small mt-2"><span>กอง: <strong>${u.division}</strong></span><span class="badge ${badgeStyle} shadow-sm">${u.role}</span></div>
           </div>`;
         if (u.status === 'Pending') { pendingHtml += cardHtml; pendingCount++; } else { approvedHtml += cardHtml; }
@@ -617,14 +638,18 @@
         const data = await res.json();
         if(data.success) {
           globalDivisions = data.divisions; 
+          
+          // แทรกกอง "ฝจ." แบบอัตโนมัติหากยังไม่มี เพื่อให้เลือกสมัครได้ทันที
+          if(!globalDivisions.includes("ฝจ.")) globalDivisions.push("ฝจ.");
+
           if (targetMode === 'dashboard') {
             populateSelect('filter-status', data.statuses, true, "-- ทุกสถานะ --");
             populateSelect('form-status', data.statuses, true, "-- เลือกสถานะ --");
             populateSelect('filter-probability', data.probabilities, true, "-- ทุกโอกาส (%) --");
             populateSelect('form-probability', data.probabilities, true, "-- เลือกโอกาส --");
-            if (userRole === 'Manager' || userRole === 'Admin') populateSelect('filter-division', data.divisions, true, "ดูทุกกอง (ทั้งหมด)");
+            if (userRole === 'Manager' || userRole === 'Admin') populateSelect('filter-division', globalDivisions, true, "ดูทุกกอง (ทั้งหมด)");
           } else if (targetMode === 'reg-division') {
-            populateSelect('reg-division', data.divisions, true, "-- เลือกกองของท่าน --");
+            populateSelect('reg-division', globalDivisions, true, "-- เลือกกองของท่าน --");
           }
         }
       } catch(e) { console.error(e); }

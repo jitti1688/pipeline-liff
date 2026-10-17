@@ -7,93 +7,101 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
-    .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;}
+    body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; }
+    .card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px;}
     .btn-line { background-color: #06C755; color: white; border: none; }
-    .page-section { display: none; } /* ซ่อนทุกหน้าเป็นค่าเริ่มต้น */
+    .page-section { display: none; }
+    .project-card { cursor: pointer; transition: 0.2s; border-left: 5px solid #0d6efd; }
+    .project-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .summary-box { background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white; }
+    .text-value { font-size: 1.4rem; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container mt-4 mb-5">
     
-    <!-- 1. หน้า Loading -->
+    <!-- หน้า Loading -->
     <div id="page-loading" class="text-center mt-5">
       <div class="spinner-border text-primary mb-3" role="status"></div>
-      <h5 class="text-primary" id="loading-text">กำลังตรวจสอบสิทธิ์ผู้ใช้งาน...</h5>
+      <h5 class="text-primary" id="loading-text">กำลังโหลดข้อมูล...</h5>
     </div>
 
-    <!-- 2. หน้าลงทะเบียน (สำหรับคนใหม่) -->
-    <div id="page-register" class="page-section card p-4">
-      <h4 class="text-center text-primary mb-3">ลงทะเบียนใช้งาน</h4>
-      <p class="text-center text-muted">กรุณาลงทะเบียนเพื่อเข้าใช้งานระบบ Pipeline</p>
-      <form id="registerForm" onsubmit="handleRegister(event)">
-        <input type="hidden" id="reg-uid" name="uid">
-        <div class="mb-3"><label class="form-label">ชื่อ-นามสกุล</label><input type="text" class="form-control" id="reg-name" name="name" required readonly></div>
-        <div class="mb-3"><label class="form-label">สังกัด (กอง)</label><select class="form-select" id="reg-division" name="division" required></select></div>
-        <button type="submit" id="btnRegister" class="btn btn-line w-100 py-2 fs-5 mt-3">ลงทะเบียน</button>
-      </form>
-    </div>
-
-    <!-- 3. หน้ารออนุมัติ (Pending) -->
-    <div id="page-pending" class="page-section card p-4 text-center">
-      <h4 class="text-warning mb-3">⏳ รอการอนุมัติ</h4>
-      <p>คุณได้ลงทะเบียนเรียบร้อยแล้ว<br>ขณะนี้กำลังรอผู้ดูแลระบบอนุมัติสิทธิ์การใช้งานครับ</p>
-    </div>
-
-    <!-- 4. หน้า Staff (ฟอร์มบันทึกข้อมูล) -->
-    <div id="page-staff" class="page-section card p-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="text-primary mb-0">สร้างรายการ Pipeline ใหม่</h5>
-        <span class="badge bg-success">Staff : <span id="staff-division"></span></span>
+    <!-- ==============================================
+         หน้า Dashboard สำหรับ Staff 
+    =============================================== -->
+    <div id="page-staff-dashboard" class="page-section">
+      <!-- กล่องสรุปผล -->
+      <div class="card p-4 summary-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 text-white">กอง: <span id="dash-division"></span></h5>
+          <span class="badge bg-light text-primary">Staff</span>
+        </div>
+        <div class="row text-center mt-2">
+          <div class="col-6 border-end border-light">
+            <p class="mb-0 fs-6 text-white-50">จำนวนโครงการ</p>
+            <div class="text-value" id="dash-total-count">0</div>
+          </div>
+          <div class="col-6">
+            <p class="mb-0 fs-6 text-white-50">มูลค่ารวม (บาท)</p>
+            <div class="text-value text-warning" id="dash-total-value">0</div>
+          </div>
+        </div>
       </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+        <h6 class="text-secondary fw-bold mb-0">รายการ Pipeline ของคุณ</h6>
+        <button class="btn btn-sm btn-line px-3 rounded-pill" onclick="openForm('new')">+ เพิ่มโครงการ</button>
+      </div>
+
+      <!-- ลิสต์แสดงโครงการ -->
+      <div id="pipeline-list"></div>
+    </div>
+
+    <!-- ==============================================
+         หน้า Form (ใช้ทั้งสร้างใหม่ และ แก้ไข)
+    =============================================== -->
+    <div id="page-staff-form" class="page-section card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-primary mb-0" id="form-title">สร้างโครงการใหม่</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="showPage('page-staff-dashboard')">กลับ</button>
+      </div>
+      
       <form id="pipelineForm" onsubmit="handleFormSubmit(event)">
+        <!-- Hidden Fields -->
         <input type="hidden" id="staff-uid" name="uid">
         <input type="hidden" id="staff-name" name="ownerName">
-        
-        <!-- ซ่อน Dropdown กองไว้ แต่ส่งค่าไปด้วยเพราะล็อคตามสังกัดแล้ว -->
         <input type="hidden" id="form-division" name="division">
-        <div class="mb-3"><label class="form-label">ชื่อโครงการ</label><input type="text" class="form-control" name="projectName" required></div>
-        <div class="mb-3"><label class="form-label">ลูกค้า</label><input type="text" class="form-control" name="customer" required></div>
-        <div class="mb-3"><label class="form-label">ประเทศ</label><input type="text" class="form-control" name="country" required></div>
-        <div class="mb-3"><label class="form-label">มูลค่าโครงการ</label><input type="number" class="form-control" name="projectValue" required></div>
-        <div class="mb-3"><label class="form-label">รายได้ปีงบประมาณ</label><input type="text" class="form-control" name="fiscalYear" required></div>
-        <div class="mb-3"><label class="form-label">สถานะโครงการ</label><select class="form-select" id="form-status" name="status" required></select></div>
-        <div class="mb-3"><label class="form-label">โอกาสความน่าจะเป็น</label><select class="form-select" id="form-probability" name="probability" required></select></div>
-        <div class="mb-3"><label class="form-label">บันทึกเพิ่มเติม</label><textarea class="form-control" name="remark" rows="3"></textarea></div>
+        <input type="hidden" id="project-id" name="projectId"> <!-- ใช้เช็คว่าเป็นของใหม่หรืออัปเดต -->
+        <input type="hidden" id="form-mode" value="new"> 
         
-        <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-2 mt-3">บันทึกข้อมูล</button>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">ชื่อโครงการ</label><input type="text" class="form-control" id="projectName" name="projectName" required></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">ลูกค้า</label><input type="text" class="form-control" id="customer" name="customer" required></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">ประเทศ</label><input type="text" class="form-control" id="country" name="country" required></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">มูลค่าโครงการ (บาท)</label><input type="number" class="form-control" id="projectValue" name="projectValue" required></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">ปีงบประมาณ</label><input type="text" class="form-control" id="fiscalYear" name="fiscalYear" placeholder="เช่น 2570" required></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">สถานะโครงการ</label><select class="form-select" id="form-status" name="status" required></select></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">โอกาสความน่าจะเป็น</label><select class="form-select" id="form-probability" name="probability" required></select></div>
+        <div class="mb-3"><label class="form-label text-muted small mb-1">บันทึกเพิ่มเติม</label><textarea class="form-control" id="remark" name="remark" rows="3"></textarea></div>
+        
+        <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-2 mt-3 fs-5">บันทึกข้อมูล</button>
       </form>
     </div>
 
-    <!-- 5. หน้า Manager (สำหรับ ฝจ. ดูรายงาน) -->
-    <div id="page-manager" class="page-section card p-4 text-center">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="text-primary mb-0">Dashboard ผู้บริหาร</h5>
-        <span class="badge bg-info">Manager</span>
-      </div>
-      <p>พื้นที่สำหรับวาง Google Looker Studio Dashboard</p>
-      <button class="btn btn-outline-primary" onclick="alert('ฟีเจอร์นี้กำลังพัฒนาในเฟสต่อไป')">ดูรายงานภาพรวม</button>
-    </div>
-
-    <!-- 6. หน้า Admin (ผู้ดูแลระบบ) -->
-    <div id="page-admin" class="page-section card p-4 text-center">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5 class="text-danger mb-0">Admin Control Panel</h5>
-        <span class="badge bg-danger">Admin</span>
-      </div>
-      <p>จัดการผู้ใช้งานและการตั้งค่าระบบ</p>
-      <button class="btn btn-danger w-100 mb-2" onclick="alert('ฟีเจอร์นี้กำลังพัฒนาในเฟสต่อไป')">จัดการสิทธิ์ผู้ใช้งาน (อนุมัติ Staff)</button>
-      <button class="btn btn-outline-danger w-100" onclick="alert('ฟีเจอร์นี้กำลังพัฒนาในเฟสต่อไป')">จัดการข่าวสาร LINE OA</button>
-    </div>
+    <!-- ส่วนหน้าอื่นๆ (Register, Pending, Manager, Admin) -->
+    <div id="page-register" class="page-section card p-4"><h4 class="text-center text-primary mb-3">ลงทะเบียนใช้งาน</h4><form id="registerForm" onsubmit="handleRegister(event)"><input type="hidden" id="reg-uid" name="uid"><div class="mb-3"><label class="form-label">ชื่อ-นามสกุล</label><input type="text" class="form-control" id="reg-name" name="name" required readonly></div><div class="mb-3"><label class="form-label">สังกัด (กอง)</label><select class="form-select" id="reg-division" name="division" required></select></div><button type="submit" id="btnRegister" class="btn btn-line w-100 py-2 fs-5 mt-3">ลงทะเบียน</button></form></div>
+    <div id="page-pending" class="page-section card p-4 text-center"><h4 class="text-warning mb-3">⏳ รอการอนุมัติ</h4><p>ขณะนี้กำลังรอผู้ดูแลระบบอนุมัติสิทธิ์</p></div>
+    <div id="page-manager" class="page-section card p-4 text-center"><h5 class="text-primary">Manager Dashboard</h5><p>พื้นที่สำหรับ Looker Studio</p></div>
+    <div id="page-admin" class="page-section card p-4 text-center"><h5 class="text-danger">Admin Panel</h5><p>หน้าจัดการระบบ</p></div>
 
   </div>
 
   <script>
-    // === ⚠️ เอา URL จาก Google Apps Script (ลงท้าย /exec) มาใส่ตรงนี้ ⚠️ ===
+    // === URL จาก Google Apps Script ===
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8lZ5hYGd72O1kxiwgzLOflzzEedb_77HDnC4IXclsUO91aGIDTmASAh4CYsRTFO-j/exec"; 
 
-    // ตัวแปรเก็บข้อมูลโปรไฟล์ LINE
     let userProfile = null;
+    let globalPipelines = []; 
+    let userDivision = "";
 
     async function initializeLiff() {
       document.getElementById('page-loading').style.display = 'block';
@@ -105,130 +113,197 @@
           userProfile = await liff.getProfile();
           checkUserStatus(userProfile.userId);
         }
-      } catch (err) {
-        alert("LIFF Error: " + err);
-      }
+      } catch (err) { alert("LIFF Error: " + err); }
     }
 
-    // ฟังก์ชันยิงตรวจสอบสิทธิ์
     async function checkUserStatus(uid) {
       try {
-        const res = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'checkUser', uid: uid })
-        });
+        const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'checkUser', uid: uid }) });
         const data = await res.json();
         
-        document.getElementById('page-loading').style.display = 'none';
-
         if(data.success) {
           if(!data.isRegistered) {
-            // ไม่เคยลงทะเบียน -> โชว์หน้าสมัคร และดึงข้อมูล Dropdown
             showPage('page-register');
             document.getElementById('reg-uid').value = userProfile.userId;
             document.getElementById('reg-name').value = userProfile.displayName;
             loadDropdowns('reg-division');
-          } else {
-            // เคยลงทะเบียนแล้ว เช็คสถานะ
-            if(data.status === 'Pending') {
-              showPage('page-pending');
-            } else if (data.status === 'Approved') {
-              // เช็ค Role เพื่อแสดงหน้าให้ถูกต้อง
-              if(data.role === 'Staff') {
-                showPage('page-staff');
-                document.getElementById('staff-uid').value = userProfile.userId;
-                document.getElementById('staff-name').value = userProfile.displayName;
-                document.getElementById('staff-division').innerText = data.division;
-                document.getElementById('form-division').value = data.division; // ล็อคกอง
-                loadDropdowns('staff-forms');
-              } else if (data.role === 'Manager') {
-                showPage('page-manager');
-              } else if (data.role === 'Admin') {
-                showPage('page-admin');
-              }
+          } else if(data.status === 'Pending') {
+            showPage('page-pending');
+          } else if (data.status === 'Approved') {
+            if(data.role === 'Staff' || data.role === 'Admin') { 
+              userDivision = data.division;
+              document.getElementById('dash-division').innerText = data.division;
+              
+              document.getElementById('staff-uid').value = userProfile.userId;
+              document.getElementById('staff-name').value = userProfile.displayName;
+              document.getElementById('form-division').value = data.division; 
+              
+              loadDropdowns('staff-forms'); 
+              loadStaffDashboard(data.division); 
+            } else if (data.role === 'Manager') {
+              showPage('page-manager');
             }
           }
-        } else {
-          alert("Error: " + data.message);
         }
       } catch(e) { console.error(e); }
     }
 
-    // ฟังก์ชันสลับหน้าจอ (UI Routing)
     function showPage(pageId) {
       document.querySelectorAll('.page-section').forEach(el => el.style.display = 'none');
+      document.getElementById('page-loading').style.display = 'none';
       document.getElementById(pageId).style.display = 'block';
     }
 
-    // กดลงทะเบียน
-    async function handleRegister(event) {
-      event.preventDefault();
-      document.getElementById('btnRegister').disabled = true;
-      document.getElementById('btnRegister').innerText = 'กำลังลงทะเบียน...';
-      
-      const form = document.getElementById('registerForm');
-      const dataObj = Object.fromEntries(new FormData(form).entries());
+    // ==========================================
+    // ส่วนการทำงานของ Staff Dashboard
+    // ==========================================
+    async function loadStaffDashboard(division) {
+      showPage('page-loading');
+      document.getElementById('loading-text').innerText = "กำลังดึงข้อมูลโครงการ...";
       
       try {
-        const res = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'registerUser', payload: dataObj })
-        });
+        const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPipelines', division: division }) });
         const result = await res.json();
-        if(result.success) { 
-          showPage('page-pending'); // สมัครเสร็จ เด้งไปหน้ารออนุมัติ
-        } else { 
-          alert('ลงทะเบียนล้มเหลว: ' + result.message); 
+        if(result.success) {
+          globalPipelines = sortPipelines(result.data);
+          renderDashboard();
         }
-      } catch(e) {
-        alert("เกิดข้อผิดพลาด: " + e);
-      }
+      } catch(e) { console.error(e); }
     }
 
-    // กดบันทึก Pipeline (Staff)
+    function sortPipelines(data) {
+      return data.sort((a, b) => {
+        // 1. ปี 2570 ขึ้นก่อน
+        const aIs2570 = (a.fiscalYear == "2570");
+        const bIs2570 = (b.fiscalYear == "2570");
+        if (aIs2570 && !bIs2570) return -1;
+        if (!aIs2570 && bIs2570) return 1;
+        
+        // 2. ถ้าไม่ใช่ 2570 เรียงตามปีล่าสุดลงมา
+        if (a.fiscalYear !== b.fiscalYear) return b.fiscalYear > a.fiscalYear ? 1 : -1;
+        
+        // 3. เรียงตามความน่าจะเป็น (ดึงตัวเลขจาก text เช่น "80%" -> 80)
+        let probA = parseInt(String(a.probability).replace(/\D/g, '')) || 0;
+        let probB = parseInt(String(b.probability).replace(/\D/g, '')) || 0;
+        return probB - probA;
+      });
+    }
+
+    function renderDashboard() {
+      let totalValue = 0;
+      let html = "";
+      
+      globalPipelines.forEach(p => {
+        totalValue += Number(p.projectValue) || 0;
+        
+        let badgeColor = "bg-secondary";
+        if(p.fiscalYear == "2570") badgeColor = "bg-primary";
+        
+        html += `
+        <div class="card project-card p-3" onclick="openForm('edit', '${p.projectId}')">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="text-dark fw-bold mb-0 text-truncate" style="max-width: 70%;">${p.projectName}</h6>
+            <span class="badge ${badgeColor}">ปี ${p.fiscalYear}</span>
+          </div>
+          <div class="text-muted small mb-2">
+            ลูกค้า: ${p.customer} | โอกาส: <span class="text-success fw-bold">${p.probability}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-end mt-1">
+            <span class="badge bg-light text-dark border">${p.status}</span>
+            <span class="text-primary fw-bold">฿${Number(p.projectValue).toLocaleString('th-TH')}</span>
+          </div>
+        </div>`;
+      });
+
+      if(globalPipelines.length === 0) {
+        html = `<div class="text-center text-muted mt-5"><p>ยังไม่มีโครงการในกองของคุณ</p></div>`;
+      }
+
+      document.getElementById('dash-total-count').innerText = globalPipelines.length;
+      document.getElementById('dash-total-value').innerText = totalValue.toLocaleString('th-TH');
+      document.getElementById('pipeline-list').innerHTML = html;
+      
+      showPage('page-staff-dashboard');
+    }
+
+    // ==========================================
+    // ส่วนการจัดการ Form (New / Edit)
+    // ==========================================
+    function openForm(mode, projectId = "") {
+      const form = document.getElementById('pipelineForm');
+      form.reset(); 
+      
+      document.getElementById('staff-uid').value = userProfile.userId;
+      document.getElementById('staff-name').value = userProfile.displayName;
+      document.getElementById('form-division').value = userDivision; 
+      
+      if(mode === 'new') {
+        document.getElementById('form-title').innerText = "สร้างโครงการใหม่";
+        document.getElementById('form-mode').value = "new";
+        document.getElementById('project-id').value = "";
+        document.getElementById('btnSubmit').innerText = "บันทึกข้อมูลใหม่";
+      } else {
+        document.getElementById('form-title').innerText = "แก้ไขโครงการ";
+        document.getElementById('form-mode').value = "edit";
+        document.getElementById('btnSubmit').innerText = "อัปเดตข้อมูล";
+        
+        const p = globalPipelines.find(item => item.projectId === projectId);
+        if(p) {
+          document.getElementById('project-id').value = p.projectId;
+          document.getElementById('projectName').value = p.projectName;
+          document.getElementById('customer').value = p.customer;
+          document.getElementById('country').value = p.country;
+          document.getElementById('projectValue').value = p.projectValue;
+          document.getElementById('fiscalYear').value = p.fiscalYear;
+          document.getElementById('form-status').value = p.status;
+          document.getElementById('form-probability').value = p.probability;
+          document.getElementById('remark').value = p.remark;
+        }
+      }
+      showPage('page-staff-form');
+    }
+
     async function handleFormSubmit(event) {
       event.preventDefault();
       document.getElementById('btnSubmit').disabled = true;
-      document.getElementById('btnSubmit').innerText = 'กำลังบันทึก...';
+      document.getElementById('btnSubmit').innerText = 'กำลังประมวลผล...';
       
       const form = document.getElementById('pipelineForm');
       const dataObj = Object.fromEntries(new FormData(form).entries());
+      const isNew = document.getElementById('form-mode').value === "new";
+      const actionType = isNew ? 'saveData' : 'updateData';
       
       try {
         const res = await fetch(WEB_APP_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'saveData', payload: dataObj })
+          body: JSON.stringify({ action: actionType, payload: dataObj })
         });
         const result = await res.json();
         if(result.success) { 
-          alert('บันทึกสำเร็จ!'); 
-          form.reset(); 
+          alert(isNew ? 'เพิ่มโครงการสำเร็จ!' : 'อัปเดตโครงการสำเร็จ!');
+          loadStaffDashboard(userDivision); 
         } else { 
-          alert('บันทึกล้มเหลว: ' + result.message); 
+          alert('ล้มเหลว: ' + result.message); 
+          document.getElementById('btnSubmit').disabled = false;
         }
       } catch(e) {
         alert("เกิดข้อผิดพลาด: " + e);
-      } finally {
         document.getElementById('btnSubmit').disabled = false;
-        document.getElementById('btnSubmit').innerText = 'บันทึกข้อมูล';
       }
     }
 
-    // ดึงค่า Dropdown (แยกว่าจะเติมให้หน้าสมัคร หรือหน้าฟอร์ม)
+    // ==========================================
+    // Utilities
+    // ==========================================
+    async function handleRegister(e) { e.preventDefault(); alert("ลงทะเบียนชั่วคราวถูกปิดใช้งานในเวอร์ชันนี้"); }
+    
     async function loadDropdowns(targetMode) {
       try {
-        const res = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'getSettings' })
-        });
+        const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSettings' }) });
         const data = await res.json();
-        if(data.success) {
-          if(targetMode === 'reg-division') {
-            populateSelect('reg-division', data.divisions);
-          } else if (targetMode === 'staff-forms') {
-            populateSelect('form-status', data.statuses);
-            populateSelect('form-probability', data.probabilities);
-          }
+        if(data.success && targetMode === 'staff-forms') {
+          populateSelect('form-status', data.statuses);
+          populateSelect('form-probability', data.probabilities);
         }
       } catch(e) { console.error(e); }
     }

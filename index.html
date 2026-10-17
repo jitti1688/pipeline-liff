@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Business Pipeline</title>
   
-  <!-- CSS Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   
-  <!-- JS Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -36,6 +34,9 @@
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     
     .app-header { background: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid #eee; margin-bottom: 20px; border-radius: 0 0 15px 15px; }
+    
+    /* ตกแต่งกล่องประวัติอัปเดต */
+    .audit-trail-box { background-color: #e9ecef; border-left: 4px solid #6c757d; font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -63,9 +64,7 @@
       <div class="card p-3 summary-box shadow">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0 text-white fw-bold"><i class="fas fa-building me-2"></i><span id="dash-division"></span></h5>
-          <div>
-            <button id="btn-admin-panel" class="btn btn-sm btn-outline-light ms-1" style="display:none;" onclick="loadAdminPanel()"><i class="fas fa-cog"></i> ระบบ</button>
-          </div>
+          <div><button id="btn-admin-panel" class="btn btn-sm btn-outline-light ms-1" style="display:none;" onclick="loadAdminPanel()"><i class="fas fa-cog"></i> ระบบ</button></div>
         </div>
         
         <div class="row text-center pb-3 border-bottom border-light border-opacity-25">
@@ -95,7 +94,7 @@
         </div>
       </div>
 
-      <!-- 🔍 กล่องค้นหาและกรองข้อมูล (Advanced Filter) -->
+      <!-- กล่องค้นหาและกรอง (Advanced Filter) -->
       <div class="card p-3 mb-3 bg-white shadow-sm border border-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h6 class="text-secondary fw-bold mb-0" style="font-size: 0.95rem;"><i class="fas fa-filter me-1"></i> ตัวกรองข้อมูล</h6>
@@ -109,29 +108,12 @@
               <input type="text" id="search-text" class="form-control" placeholder="ค้นชื่อโครงการ, ลูกค้า, ประเทศ..." oninput="applyFilters()">
             </div>
           </div>
-          
-          <div class="col-6">
-            <select id="filter-status" class="form-select form-select-sm bg-light" onchange="applyFilters()">
-              <option value="">-- ทุกสถานะ --</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <select id="filter-probability" class="form-select form-select-sm bg-light" onchange="applyFilters()">
-              <option value="">-- ทุกโอกาส (%) --</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <select id="filter-year" class="form-select form-select-sm bg-light" onchange="applyFilters()">
-              <option value="">-- ทุกปีงบประมาณ --</option>
-            </select>
-          </div>
-          
+          <div class="col-6"><select id="filter-status" class="form-select form-select-sm bg-light" onchange="applyFilters()"><option value="">-- ทุกสถานะ --</option></select></div>
+          <div class="col-6"><select id="filter-probability" class="form-select form-select-sm bg-light" onchange="applyFilters()"><option value="">-- ทุกโอกาส (%) --</option></select></div>
+          <div class="col-6"><select id="filter-year" class="form-select form-select-sm bg-light" onchange="applyFilters()"><option value="">-- ทุกปีงบประมาณ --</option></select></div>
           <div class="col-6" id="manager-div-filter-container" style="display: none;">
-            <select id="filter-division" class="form-select form-select-sm bg-light text-primary fw-bold border-primary" onchange="applyFilters()">
-              <option value="">ดูทุกกอง (ทั้งหมด)</option>
-            </select>
+            <select id="filter-division" class="form-select form-select-sm bg-light text-primary fw-bold border-primary" onchange="applyFilters()"><option value="">ดูทุกกอง (ทั้งหมด)</option></select>
           </div>
-
           <div class="col-12" id="reporter-toggle-container" style="display: none;">
             <div class="form-check form-switch mt-1 p-2 bg-light rounded border">
               <input class="form-check-input ms-1" type="checkbox" id="reporter-toggle" onchange="applyFilters()">
@@ -163,12 +145,31 @@
         </div>
         
         <form id="pipelineForm" onsubmit="handleFormSubmit(event)">
-          <input type="hidden" id="staff-uid" name="uid">
-          <input type="hidden" id="staff-name" name="ownerName">
-          <input type="hidden" id="form-division" name="division">
           <input type="hidden" id="project-id" name="projectId">
           <input type="hidden" id="form-mode" value="new"> 
           
+          <!-- ส่วนจัดการเจ้าของโครงการ -->
+          <div id="form-owner-readonly" class="mb-3">
+            <label class="form-label text-muted small fw-bold mb-1"><i class="fas fa-user-circle"></i> ผู้รับผิดชอบโครงการ</label>
+            <input type="text" class="form-control bg-light text-primary fw-bold border-0" id="readonly-owner" readonly>
+            <input type="hidden" id="staff-uid" name="uid">
+            <input type="hidden" id="staff-name" name="ownerName">
+            <input type="hidden" id="form-division" name="division">
+          </div>
+
+          <div id="form-owner-assign" class="row mb-3 p-3 bg-light rounded border border-primary" style="display:none;">
+            <div class="col-12 mb-2"><span class="badge bg-primary"><i class="fas fa-cog"></i> ส่วนจัดการ (Manager/Admin)</span></div>
+            <div class="col-6">
+              <label class="form-label text-muted small fw-bold mb-1">สังกัด (กอง) <span class="text-danger">*</span></label>
+              <select class="form-select border-primary shadow-sm" id="assign-division" onchange="updateAssignOwnerDropdown()"></select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-muted small fw-bold mb-1">ผู้รับผิดชอบ <span class="text-danger">*</span></label>
+              <select class="form-select border-primary shadow-sm" id="assign-owner"></select>
+            </div>
+          </div>
+          <!-- สิ้นสุดส่วนจัดการเจ้าของ -->
+
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">ชื่อโครงการ <span class="text-danger">*</span></label><input type="text" class="form-control" id="projectName" name="projectName" required></div>
           <div class="row">
             <div class="col-6 mb-3"><label class="form-label text-muted small fw-bold mb-1">ลูกค้า <span class="text-danger">*</span></label><input type="text" class="form-control" id="customer" name="customer" required></div>
@@ -180,7 +181,12 @@
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">โอกาสความน่าจะเป็น <span class="text-danger">*</span></label><select class="form-select" id="form-probability" name="probability" required></select></div>
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">บันทึกเพิ่มเติม</label><textarea class="form-control" id="remark" name="remark" rows="3"></textarea></div>
           
-          <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 mt-3 fw-bold shadow-sm"><i class="fas fa-save me-2"></i>บันทึกข้อมูล</button>
+          <!-- กล่องแสดงประวัติการอัปเดต -->
+          <div id="update-info-container" class="audit-trail-box p-2 rounded mt-2 mb-3" style="display:none;">
+            <div class="text-muted"><i class="fas fa-history me-1"></i> <span id="update-info-text"></span></div>
+          </div>
+
+          <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 mt-2 fw-bold shadow-sm"><i class="fas fa-save me-2"></i>บันทึกข้อมูล</button>
         </form>
       </div>
     </div>
@@ -195,16 +201,10 @@
           <button class="btn btn-sm btn-outline-light" onclick="showPage('page-dashboard')">กลับ</button>
         </div>
       </div>
-
       <ul class="nav nav-pills nav-fill bg-white p-1 rounded shadow-sm mb-3" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active fw-bold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-users" type="button" role="tab">รออนุมัติ <span class="badge bg-danger ms-1" id="badge-pending-count">0</span></button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link fw-bold" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-users" type="button" role="tab">ผู้ใช้งานทั้งหมด</button>
-        </li>
+        <li class="nav-item" role="presentation"><button class="nav-link active fw-bold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-users" type="button" role="tab">รออนุมัติ <span class="badge bg-danger ms-1" id="badge-pending-count">0</span></button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link fw-bold" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-users" type="button" role="tab">ผู้ใช้งานทั้งหมด</button></li>
       </ul>
-      
       <div class="tab-content" id="adminTabContent">
         <div class="tab-pane fade show active" id="pending-users" role="tabpanel"><div id="admin-list-pending"></div></div>
         <div class="tab-pane fade" id="approved-users" role="tabpanel"><div id="admin-list-approved"></div></div>
@@ -218,21 +218,9 @@
       <div class="text-center mb-4"><i class="fas fa-user-plus text-primary" style="font-size: 3rem;"></i><h4 class="text-primary fw-bold mt-2">ลงทะเบียนใช้งาน</h4></div>
       <form id="registerForm" onsubmit="handleRegister(event)">
         <input type="hidden" id="reg-uid" name="uid">
-        
-        <!-- ข้อมูลส่วนตัว (อัปเดตใหม่) -->
-        <div class="mb-3">
-          <label class="form-label text-muted small fw-bold mb-1">Username (LINE Profile)</label>
-          <input type="text" class="form-control bg-light text-muted" id="reg-linename" name="lineName" required readonly>
-        </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold mb-1">ชื่อ-นามสกุลจริง <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="reg-fullname" name="fullName" placeholder="เช่น สมชาย ใจดี" required>
-        </div>
-        <div class="mb-4">
-          <label class="form-label fw-bold mb-1">สังกัด (กอง) <span class="text-danger">*</span></label>
-          <select class="form-select" id="reg-division" name="division" required></select>
-        </div>
-        
+        <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">Username (LINE Profile)</label><input type="text" class="form-control bg-light text-muted" id="reg-linename" name="lineName" required readonly></div>
+        <div class="mb-3"><label class="form-label fw-bold mb-1">ชื่อ-นามสกุลจริง <span class="text-danger">*</span></label><input type="text" class="form-control" id="reg-fullname" name="fullName" placeholder="เช่น สมชาย ใจดี" required></div>
+        <div class="mb-4"><label class="form-label fw-bold mb-1">สังกัด (กอง) <span class="text-danger">*</span></label><select class="form-select" id="reg-division" name="division" required></select></div>
         <button type="submit" id="btnRegister" class="btn btn-line w-100 py-3 fw-bold shadow-sm">ส่งคำขอลงทะเบียน</button>
       </form>
     </div>
@@ -275,10 +263,11 @@
     let globalPipelines = []; 
     let currentFilteredData = []; 
     let globalDivisions = []; 
+    let activeUsersList = []; // เก็บรายชื่อพนักงานทั้งหมดสำหรับให้ Manager/Admin เลือก
     let userRole = "";
     let userDivision = "";
     let userUid = "";
-    let userNameReal = ""; // เก็บชื่อจริงไว้ใช้เป็น ownerName
+    let userNameReal = ""; 
 
     const wonKeywords = ["ได้งานแล้ว", "ลงนาม", "เซ็นสัญญา", "win", "success"];
     const pendingKeywords = ["อยู่ระหว่างการพิจารณาผล", "พิจารณา", "กำลังพิจารณา", "pending"];
@@ -303,25 +292,23 @@
           if(!data.isRegistered) {
             showPage('page-register');
             document.getElementById('reg-uid').value = userProfile.userId;
-            document.getElementById('reg-linename').value = userProfile.displayName; // แสดงชื่อ LINE
+            document.getElementById('reg-linename').value = userProfile.displayName;
             loadDropdowns('reg-division');
           } else if(data.status === 'Pending') { showPage('page-pending');
           } else if(data.status === 'Rejected') { showPage('page-rejected');
           } else if (data.status === 'Approved') {
             userRole = data.role; userDivision = data.division; userUid = uid;
-            
-            // ดึงชื่อจริงมาแสดง และไว้ใช้บันทึกงานใหม่
             userNameReal = data.name || userProfile.displayName;
-            document.getElementById('staff-uid').value = userProfile.userId;
-            document.getElementById('staff-name').value = userNameReal; 
-            document.getElementById('form-division').value = data.division; 
             
             document.getElementById('header-profile').style.display = 'block';
             document.getElementById('header-role').innerText = `${userNameReal} (${userRole})`;
             document.getElementById('dash-division').innerText = (userRole === 'Manager' || userRole === 'Admin') ? "ภาพรวม (ทุกกอง)" : data.division;
             
             if(userRole === 'Reporter') document.getElementById('reporter-toggle-container').style.display = 'block';
-            if(userRole === 'Manager' || userRole === 'Admin') document.getElementById('manager-div-filter-container').style.display = 'block';
+            if(userRole === 'Manager' || userRole === 'Admin') {
+              document.getElementById('manager-div-filter-container').style.display = 'block';
+              loadActiveUsers(); // โหลดรายชื่อพนักงานเตรียมไว้ให้ Assign งาน
+            }
             if(userRole === 'Admin') document.getElementById('btn-admin-panel').style.display = 'inline-block';
 
             loadDropdowns('dashboard'); 
@@ -329,6 +316,15 @@
           }
         }
       } catch(e) { Swal.fire('ข้อผิดพลาด', 'เซิร์ฟเวอร์ไม่ตอบสนอง', 'error'); }
+    }
+
+    // ดึงรายชื่อพนักงานทั้งหมด (สำหรับ Manager/Admin ใช้ Assign งาน)
+    async function loadActiveUsers() {
+      try {
+        const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getActiveUsers' }) });
+        const data = await res.json();
+        if(data.success) activeUsersList = data.data;
+      } catch(e) { console.error(e); }
     }
 
     function showPage(pageId) {
@@ -377,10 +373,8 @@
     }
 
     function resetFilters() {
-      document.getElementById('search-text').value = '';
-      document.getElementById('filter-status').value = '';
-      document.getElementById('filter-probability').value = '';
-      document.getElementById('filter-year').value = '';
+      document.getElementById('search-text').value = ''; document.getElementById('filter-status').value = '';
+      document.getElementById('filter-probability').value = ''; document.getElementById('filter-year').value = '';
       if(document.getElementById('filter-division')) document.getElementById('filter-division').value = '';
       if(document.getElementById('reporter-toggle')) document.getElementById('reporter-toggle').checked = false;
       applyFilters();
@@ -388,27 +382,19 @@
 
     function applyFilters() {
       let filtered = globalPipelines;
-      
       const searchText = document.getElementById('search-text').value.toLowerCase();
       const statusFilter = document.getElementById('filter-status').value;
       const probFilter = document.getElementById('filter-probability').value;
       const yearFilter = document.getElementById('filter-year').value;
 
       if (searchText) {
-        filtered = filtered.filter(p => 
-          (p.projectName && p.projectName.toLowerCase().includes(searchText)) || 
-          (p.customer && p.customer.toLowerCase().includes(searchText)) ||
-          (p.country && p.country.toLowerCase().includes(searchText))
-        );
+        filtered = filtered.filter(p => (p.projectName && p.projectName.toLowerCase().includes(searchText)) || (p.customer && p.customer.toLowerCase().includes(searchText)) || (p.country && p.country.toLowerCase().includes(searchText)));
       }
-      
       if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
       if (probFilter) filtered = filtered.filter(p => p.probability === probFilter);
       if (yearFilter) filtered = filtered.filter(p => String(p.fiscalYear) === String(yearFilter));
       
-      if (userRole === 'Reporter' && document.getElementById('reporter-toggle').checked) {
-        filtered = filtered.filter(p => p.uid === userUid);
-      }
+      if (userRole === 'Reporter' && document.getElementById('reporter-toggle').checked) filtered = filtered.filter(p => p.uid === userUid);
       if (userRole === 'Manager' || userRole === 'Admin') {
         const divFilter = document.getElementById('filter-division').value;
         if (divFilter) filtered = filtered.filter(p => p.division === divFilter);
@@ -431,10 +417,7 @@
         
         if (!isLost) {
           totalValue += val; activeCount++;
-          if (p.fiscalYear == "2570") {
-            val2570 += val;
-            if (isWon) valWon2570 += val;
-            if (isPending) valPending2570 += val;
+          if (p.fiscalYear == "2570") { val2570 += val; if (isWon) valWon2570 += val; if (isPending) valPending2570 += val;
           } else if (p.fiscalYear == "2571") val2571 += val;
         }
         
@@ -464,17 +447,11 @@
         </div>`;
       });
 
-      if(dataToRender.length === 0) { 
-        html = `<div class="text-center text-muted mt-5"><i class="fas fa-search mb-3" style="font-size:3rem; opacity:0.2;"></i><p>ไม่พบข้อมูลที่ค้นหา</p></div>`; 
-      }
+      if(dataToRender.length === 0) { html = `<div class="text-center text-muted mt-5"><i class="fas fa-search mb-3" style="font-size:3rem; opacity:0.2;"></i><p>ไม่พบข้อมูลที่ค้นหา</p></div>`; }
 
-      document.getElementById('dash-active-count').innerText = activeCount;
-      document.getElementById('dash-total-value').innerText = formatShortNumber(totalValue);
-      document.getElementById('dash-val-2570').innerText = formatShortNumber(val2570);
-      document.getElementById('dash-val-2571').innerText = formatShortNumber(val2571);
-      document.getElementById('dash-val-won').innerText = formatShortNumber(valWon2570);
-      document.getElementById('dash-val-pending').innerText = formatShortNumber(valPending2570);
-      
+      document.getElementById('dash-active-count').innerText = activeCount; document.getElementById('dash-total-value').innerText = formatShortNumber(totalValue);
+      document.getElementById('dash-val-2570').innerText = formatShortNumber(val2570); document.getElementById('dash-val-2571').innerText = formatShortNumber(val2571);
+      document.getElementById('dash-val-won').innerText = formatShortNumber(valWon2570); document.getElementById('dash-val-pending').innerText = formatShortNumber(valPending2570);
       document.getElementById('pipeline-list').innerHTML = html;
       showPage('page-dashboard');
     }
@@ -484,27 +461,39 @@
       return num.toLocaleString('th-TH');
     }
 
-    // Export Excel แบบ Professional (ส่งออกเฉพาะข้อมูลที่ Filter มาแล้ว)
     function exportToExcel() {
-      if(currentFilteredData.length === 0) {
-        Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลสำหรับส่งออก Excel', 'warning'); return;
-      }
+      if(currentFilteredData.length === 0) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลสำหรับส่งออก Excel', 'warning'); return; }
       Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-
       setTimeout(() => {
         const exportData = currentFilteredData.map(p => ({
-          "รหัสโครงการ": p.projectId, "ชื่อโครงการ": p.projectName, "กองที่รับผิดชอบ": p.division,
-          "ผู้รับผิดชอบ": p.ownerName, "ลูกค้า": p.customer, "ประเทศ": p.country,
-          "มูลค่าโครงการ (บาท)": Number(p.projectValue), "ปีงบประมาณ": p.fiscalYear,
-          "สถานะโครงการ": p.status, "โอกาส (%)": p.probability, "บันทึกเพิ่มเติม": p.remark
+          "รหัสโครงการ": p.projectId, "ชื่อโครงการ": p.projectName, "กองที่รับผิดชอบ": p.division, "ผู้รับผิดชอบ": p.ownerName,
+          "ลูกค้า": p.customer, "ประเทศ": p.country, "มูลค่าโครงการ (บาท)": Number(p.projectValue), "ปีงบประมาณ": p.fiscalYear,
+          "สถานะโครงการ": p.status, "โอกาส (%)": p.probability, "บันทึกเพิ่มเติม": p.remark,
+          "อัปเดตล่าสุดเมื่อ": p.updatedAt ? new Date(p.updatedAt).toLocaleString('th-TH') : '', "อัปเดตโดย": p.updatedBy || ''
         }));
         const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pipeline_Data");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Pipeline_Data");
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-        XLSX.writeFile(wb, `Pipeline_Export_${dateStr}.xlsx`);
-        Swal.close();
+        XLSX.writeFile(wb, `Pipeline_Export_${dateStr}.xlsx`); Swal.close();
       }, 500); 
+    }
+
+    // เมื่อ Manager/Admin เปลี่ยนกองในกล่อง Assign ให้โหลดรายชื่อพนักงานกองนั้น
+    function updateAssignOwnerDropdown() {
+      const div = document.getElementById('assign-division').value;
+      const ownerSelect = document.getElementById('assign-owner');
+      ownerSelect.innerHTML = '';
+      
+      const usersInDiv = activeUsersList.filter(u => u.division === div);
+      if (usersInDiv.length === 0) {
+        ownerSelect.innerHTML = '<option value="">-- ไม่มีพนักงานในกองนี้ --</option>';
+      } else {
+        usersInDiv.forEach(u => {
+          let opt = document.createElement('option');
+          opt.value = u.uid; opt.text = u.name;
+          ownerSelect.appendChild(opt);
+        });
+      }
     }
 
     function openForm(mode, projectId = "", projectOwnerUid = "") {
@@ -513,14 +502,34 @@
       }
       const form = document.getElementById('pipelineForm'); form.reset(); 
       const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.disabled = false;
-      document.getElementById('staff-uid').value = userProfile.userId;
-      document.getElementById('staff-name').value = userNameReal; // ใช้ชื่อจริงที่ดึงมา
+      
+      // จัดการการแสดงผลกล่องเจ้าของโครงการ (Admin/Manager vs Staff/Reporter)
+      if (userRole === 'Manager' || userRole === 'Admin') {
+        document.getElementById('form-owner-readonly').style.display = 'none';
+        document.getElementById('form-owner-assign').style.display = 'flex';
+        populateSelect('assign-division', globalDivisions, false); 
+      } else {
+        document.getElementById('form-owner-readonly').style.display = 'block';
+        document.getElementById('form-owner-assign').style.display = 'none';
+        document.getElementById('staff-uid').value = userProfile.userId;
+        document.getElementById('staff-name').value = userNameReal;
+        document.getElementById('form-division').value = userDivision;
+      }
       
       if(mode === 'new') {
-        document.getElementById('form-division').value = userDivision; 
         document.getElementById('form-title').innerHTML = "<i class='fas fa-plus-circle me-2'></i>สร้างโครงการใหม่";
         document.getElementById('form-mode').value = "new"; document.getElementById('project-id').value = "";
         btnSubmit.innerHTML = "<i class='fas fa-save me-2'></i>บันทึกข้อมูลใหม่";
+        document.getElementById('update-info-container').style.display = 'none'; // ซ่อนประวัติอัปเดตตอนสร้างใหม่
+
+        if (userRole === 'Manager' || userRole === 'Admin') {
+          document.getElementById('assign-division').value = userDivision;
+          updateAssignOwnerDropdown();
+          document.getElementById('assign-owner').value = userUid; // Default เป็นตัวเองก่อน
+        } else {
+          document.getElementById('readonly-owner').value = userNameReal + " (" + userDivision + ")";
+        }
+
       } else {
         document.getElementById('form-title').innerHTML = "<i class='fas fa-edit me-2'></i>อัปเดตโครงการ";
         document.getElementById('form-mode').value = "edit";
@@ -528,12 +537,31 @@
         
         const p = globalPipelines.find(item => item.projectId === projectId);
         if(p) {
-          localStorage.setItem('proj_' + p.projectId, JSON.stringify(p));
-          document.getElementById('form-division').value = p.division; document.getElementById('project-id').value = p.projectId;
-          document.getElementById('projectName').value = p.projectName; document.getElementById('customer').value = p.customer;
-          document.getElementById('country').value = p.country; document.getElementById('projectValue').value = p.projectValue;
-          document.getElementById('fiscalYear').value = p.fiscalYear; document.getElementById('form-status').value = p.status;
-          document.getElementById('form-probability').value = p.probability; document.getElementById('remark').value = p.remark;
+          localStorage.setItem('proj_' + p.projectId, JSON.stringify(p)); // ลบป้าย 🔴 อัปเดตออก
+
+          if (userRole === 'Manager' || userRole === 'Admin') {
+            document.getElementById('assign-division').value = p.division;
+            updateAssignOwnerDropdown();
+            document.getElementById('assign-owner').value = p.uid; // Set ให้ตรงกับเจ้าของเดิม
+          } else {
+            document.getElementById('readonly-owner').value = p.ownerName + " (" + p.division + ")";
+          }
+
+          document.getElementById('project-id').value = p.projectId; document.getElementById('projectName').value = p.projectName;
+          document.getElementById('customer').value = p.customer; document.getElementById('country').value = p.country;
+          document.getElementById('projectValue').value = p.projectValue; document.getElementById('fiscalYear').value = p.fiscalYear;
+          document.getElementById('form-status').value = p.status; document.getElementById('form-probability').value = p.probability;
+          document.getElementById('remark').value = p.remark;
+
+          // แสดงข้อมูลอัปเดตล่าสุด
+          if (p.updatedAt) {
+            let dt = new Date(p.updatedAt);
+            let dateStr = dt.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            document.getElementById('update-info-text').innerHTML = `อัปเดตล่าสุด: <strong class="text-dark">${dateStr} น.</strong> โดย <strong class="text-primary">${p.updatedBy || 'ระบบ'}</strong>`;
+            document.getElementById('update-info-container').style.display = 'block';
+          } else {
+            document.getElementById('update-info-container').style.display = 'none';
+          }
         }
       }
       showPage('page-form');
@@ -543,10 +571,24 @@
       event.preventDefault();
       const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.disabled = true;
       Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      
       const form = document.getElementById('pipelineForm');
       const dataObj = Object.fromEntries(new FormData(form).entries());
       const isNew = document.getElementById('form-mode').value === "new";
       const actionType = isNew ? 'saveData' : 'updateData';
+
+      // ดึงค่าการ Assign ของ Manager/Admin ไปบันทึก
+      if (userRole === 'Manager' || userRole === 'Admin') {
+        const ownerSelect = document.getElementById('assign-owner');
+        if(!ownerSelect.value) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกผู้รับผิดชอบโครงการ', 'warning'); btnSubmit.disabled = false; return; }
+        
+        dataObj.division = document.getElementById('assign-division').value;
+        dataObj.uid = ownerSelect.value;
+        dataObj.ownerName = ownerSelect.options[ownerSelect.selectedIndex].text;
+      }
+
+      // บันทึกชื่อผู้ที่ทำการกดอัปเดตครั้งนี้ (เพื่อทำ Audit Trail)
+      dataObj.updaterName = userNameReal; 
       
       try {
         const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: actionType, payload: dataObj }) });
@@ -556,9 +598,6 @@
       } catch(e) { Swal.fire('ข้อผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error'); btnSubmit.disabled = false; }
     }
 
-    // ==========================================
-    // ⚙️ Admin Control Panel
-    // ==========================================
     async function loadAdminPanel() {
       Swal.fire({ title: 'กำลังโหลดข้อมูลผู้ใช้...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
       try {
@@ -575,19 +614,13 @@
       users.forEach(u => {
         let safeName = String(u.name).replace(/'/g, "\\'");
         let badgeStyle = u.role === 'Admin' ? 'bg-danger' : (u.role === 'Manager' ? 'bg-info' : 'bg-secondary');
-        let statusBadge = u.status === 'Pending' ? '<span class="badge bg-warning text-dark shadow-sm">รออนุมัติ</span>' : 
-                         (u.status === 'Rejected' ? '<span class="badge bg-dark shadow-sm">ระงับสิทธิ์</span>' : `<span class="badge bg-success shadow-sm">ใช้งานปกติ</span>`);
-        
+        let statusBadge = u.status === 'Pending' ? '<span class="badge bg-warning text-dark shadow-sm">รออนุมัติ</span>' : (u.status === 'Rejected' ? '<span class="badge bg-dark shadow-sm">ระงับสิทธิ์</span>' : `<span class="badge bg-success shadow-sm">ใช้งานปกติ</span>`);
         let lineNameHtml = u.lineName ? `<div class="text-success small mt-1"><i class="fab fa-line"></i> ${u.lineName}</div>` : '';
                          
         let cardHtml = `
           <div class="card user-card p-3 shadow-sm" onclick="openAdminUserModal('${u.uid}', '${safeName}', '${u.division}', '${u.role}', '${u.status}')">
             <div class="d-flex justify-content-between align-items-start mb-1">
-              <div>
-                <h6 class="mb-0 fw-bold"><i class="fas fa-user text-primary me-2"></i>${u.name}</h6>
-                ${lineNameHtml}
-              </div>
-              ${statusBadge}
+              <div><h6 class="mb-0 fw-bold"><i class="fas fa-user text-primary me-2"></i>${u.name}</h6>${lineNameHtml}</div>${statusBadge}
             </div>
             <div class="d-flex justify-content-between text-muted small mt-2"><span>กอง: <strong>${u.division}</strong></span><span class="badge ${badgeStyle} shadow-sm">${u.role}</span></div>
           </div>`;
@@ -638,8 +671,6 @@
         const data = await res.json();
         if(data.success) {
           globalDivisions = data.divisions; 
-          
-          // แทรกกอง "ฝจ." แบบอัตโนมัติหากยังไม่มี เพื่อให้เลือกสมัครได้ทันที
           if(!globalDivisions.includes("ฝจ.")) globalDivisions.push("ฝจ.");
 
           if (targetMode === 'dashboard') {

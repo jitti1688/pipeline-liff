@@ -11,10 +11,12 @@
     .card { border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px;}
     .btn-line { background-color: #06C755; color: white; border: none; }
     .page-section { display: none; }
-    .project-card { cursor: pointer; transition: 0.2s; border-left: 5px solid #0d6efd; }
+    .project-card { cursor: pointer; transition: 0.2s; border-left: 5px solid #0d6efd; position: relative;}
     .project-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .summary-box { background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white; }
-    .text-value { font-size: 1.4rem; font-weight: bold; }
+    .text-value { font-size: 1.2rem; font-weight: bold; }
+    .badge-update { position: absolute; top: -8px; right: -8px; font-size: 0.75rem; animation: pulse 1.5s infinite; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
   </style>
 </head>
 <body>
@@ -31,25 +33,43 @@
     =============================================== -->
     <div id="page-staff-dashboard" class="page-section">
       <!-- กล่องสรุปผล -->
-      <div class="card p-4 summary-box">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="card p-3 summary-box">
+        <div class="d-flex justify-content-between align-items-center mb-2">
           <h5 class="mb-0 text-white">กอง: <span id="dash-division"></span></h5>
           <span class="badge bg-light text-primary">Staff</span>
         </div>
-        <div class="row text-center mt-2">
-          <div class="col-6 border-end border-light">
-            <p class="mb-0 fs-6 text-white-50">จำนวนโครงการ</p>
-            <div class="text-value" id="dash-total-count">0</div>
+        
+        <!-- สรุปแถวที่ 1: ภาพรวมทั้งหมด (ไม่รวมปิดงาน) -->
+        <div class="row text-center mt-2 pb-2 border-bottom border-light border-opacity-25">
+          <div class="col-6 border-end border-light border-opacity-25">
+            <p class="mb-0 text-white-50" style="font-size: 0.85rem;">เป้าปี 2570</p>
+            <div class="text-value" id="dash-val-2570">0</div>
           </div>
           <div class="col-6">
-            <p class="mb-0 fs-6 text-white-50">มูลค่ารวม (บาท)</p>
+            <p class="mb-0 text-white-50" style="font-size: 0.85rem;">เป้ารวมทุกปี (Active)</p>
             <div class="text-value text-warning" id="dash-total-value">0</div>
+          </div>
+        </div>
+
+        <!-- สรุปแถวที่ 2: แยกสถานะปี 2570 และปีถัดไป -->
+        <div class="row text-center mt-2 pt-1">
+          <div class="col-4 border-end border-light border-opacity-25">
+            <p class="mb-0 text-warning" style="font-size: 0.70rem;">พิจารณาผล (2570)</p>
+            <div class="fw-bold text-warning" style="font-size: 0.95rem;" id="dash-val-pending">0</div>
+          </div>
+          <div class="col-4 border-end border-light border-opacity-25">
+            <p class="mb-0 text-info" style="font-size: 0.70rem; color: #00ffcc!important;">ได้งานแล้ว (2570)</p>
+            <div class="fw-bold" style="font-size: 0.95rem; color: #00ffcc;" id="dash-val-won">0</div>
+          </div>
+          <div class="col-4">
+            <p class="mb-0 text-white-50" style="font-size: 0.75rem;">เป้าปี 2571</p>
+            <div class="fw-bold" style="font-size: 0.9rem;" id="dash-val-2571">0</div>
           </div>
         </div>
       </div>
 
       <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-        <h6 class="text-secondary fw-bold mb-0">รายการ Pipeline ของคุณ</h6>
+        <h6 class="text-secondary fw-bold mb-0">รายการ Pipeline ของคุณ (<span id="dash-active-count">0</span>)</h6>
         <button class="btn btn-sm btn-line px-3 rounded-pill" onclick="openForm('new')">+ เพิ่มโครงการ</button>
       </div>
 
@@ -67,11 +87,10 @@
       </div>
       
       <form id="pipelineForm" onsubmit="handleFormSubmit(event)">
-        <!-- Hidden Fields -->
         <input type="hidden" id="staff-uid" name="uid">
         <input type="hidden" id="staff-name" name="ownerName">
         <input type="hidden" id="form-division" name="division">
-        <input type="hidden" id="project-id" name="projectId"> <!-- ใช้เช็คว่าเป็นของใหม่หรืออัปเดต -->
+        <input type="hidden" id="project-id" name="projectId">
         <input type="hidden" id="form-mode" value="new"> 
         
         <div class="mb-3"><label class="form-label text-muted small mb-1">ชื่อโครงการ</label><input type="text" class="form-control" id="projectName" name="projectName" required></div>
@@ -87,12 +106,11 @@
       </form>
     </div>
 
-    <!-- ส่วนหน้าอื่นๆ (Register, Pending, Manager, Admin) -->
+    <!-- ส่วนหน้าอื่นๆ -->
     <div id="page-register" class="page-section card p-4"><h4 class="text-center text-primary mb-3">ลงทะเบียนใช้งาน</h4><form id="registerForm" onsubmit="handleRegister(event)"><input type="hidden" id="reg-uid" name="uid"><div class="mb-3"><label class="form-label">ชื่อ-นามสกุล</label><input type="text" class="form-control" id="reg-name" name="name" required readonly></div><div class="mb-3"><label class="form-label">สังกัด (กอง)</label><select class="form-select" id="reg-division" name="division" required></select></div><button type="submit" id="btnRegister" class="btn btn-line w-100 py-2 fs-5 mt-3">ลงทะเบียน</button></form></div>
     <div id="page-pending" class="page-section card p-4 text-center"><h4 class="text-warning mb-3">⏳ รอการอนุมัติ</h4><p>ขณะนี้กำลังรอผู้ดูแลระบบอนุมัติสิทธิ์</p></div>
     <div id="page-manager" class="page-section card p-4 text-center"><h5 class="text-primary">Manager Dashboard</h5><p>พื้นที่สำหรับ Looker Studio</p></div>
     <div id="page-admin" class="page-section card p-4 text-center"><h5 class="text-danger">Admin Panel</h5><p>หน้าจัดการระบบ</p></div>
-
   </div>
 
   <script>
@@ -103,13 +121,16 @@
     let globalPipelines = []; 
     let userDivision = "";
 
+    // คีย์เวิร์ดสำหรับตรวจจับสถานะ เพื่อใช้กรองยอดเงิน (ปรับแก้คำในวงเล็บให้ตรงกับชีตของคุณได้)
+    const wonKeywords = ["ได้งานแล้ว", "ลงนาม", "เซ็นสัญญา", "win", "success"];
+    const pendingKeywords = ["อยู่ระหว่างการพิจารณาผล", "พิจารณา", "กำลังพิจารณา", "pending"];
+    const lostKeywords = ["ไม่ได้งาน/ปิดงาน", "ไม่ได้งาน", "ปิดงาน", "ยกเลิก", "lost", "cancel"];
+
     async function initializeLiff() {
       document.getElementById('page-loading').style.display = 'block';
       try {
         await liff.init({ liffId: "2012060852-adaxUYUO" });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-        } else {
+        if (!liff.isLoggedIn()) { liff.login(); } else {
           userProfile = await liff.getProfile();
           checkUserStatus(userProfile.userId);
         }
@@ -127,22 +148,18 @@
             document.getElementById('reg-uid').value = userProfile.userId;
             document.getElementById('reg-name').value = userProfile.displayName;
             loadDropdowns('reg-division');
-          } else if(data.status === 'Pending') {
-            showPage('page-pending');
+          } else if(data.status === 'Pending') { showPage('page-pending');
           } else if (data.status === 'Approved') {
             if(data.role === 'Staff' || data.role === 'Admin') { 
               userDivision = data.division;
               document.getElementById('dash-division').innerText = data.division;
-              
               document.getElementById('staff-uid').value = userProfile.userId;
               document.getElementById('staff-name').value = userProfile.displayName;
               document.getElementById('form-division').value = data.division; 
               
               loadDropdowns('staff-forms'); 
               loadStaffDashboard(data.division); 
-            } else if (data.role === 'Manager') {
-              showPage('page-manager');
-            }
+            } else if (data.role === 'Manager') { showPage('page-manager'); }
           }
         }
       } catch(e) { console.error(e); }
@@ -154,13 +171,9 @@
       document.getElementById(pageId).style.display = 'block';
     }
 
-    // ==========================================
-    // ส่วนการทำงานของ Staff Dashboard
-    // ==========================================
     async function loadStaffDashboard(division) {
       showPage('page-loading');
       document.getElementById('loading-text').innerText = "กำลังดึงข้อมูลโครงการ...";
-      
       try {
         const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPipelines', division: division }) });
         const result = await res.json();
@@ -173,16 +186,18 @@
 
     function sortPipelines(data) {
       return data.sort((a, b) => {
-        // 1. ปี 2570 ขึ้นก่อน
+        // ให้สถานะ "ไม่ได้งาน/ปิดงาน" ไปอยู่ล่างสุดเสมอ
+        const aIsLost = lostKeywords.some(kw => String(a.status).toLowerCase().includes(kw));
+        const bIsLost = lostKeywords.some(kw => String(b.status).toLowerCase().includes(kw));
+        if (aIsLost && !bIsLost) return 1;
+        if (!aIsLost && bIsLost) return -1;
+
         const aIs2570 = (a.fiscalYear == "2570");
         const bIs2570 = (b.fiscalYear == "2570");
         if (aIs2570 && !bIs2570) return -1;
         if (!aIs2570 && bIs2570) return 1;
-        
-        // 2. ถ้าไม่ใช่ 2570 เรียงตามปีล่าสุดลงมา
         if (a.fiscalYear !== b.fiscalYear) return b.fiscalYear > a.fiscalYear ? 1 : -1;
         
-        // 3. เรียงตามความน่าจะเป็น (ดึงตัวเลขจาก text เช่น "80%" -> 80)
         let probA = parseInt(String(a.probability).replace(/\D/g, '')) || 0;
         let probB = parseInt(String(b.probability).replace(/\D/g, '')) || 0;
         return probB - probA;
@@ -190,49 +205,86 @@
     }
 
     function renderDashboard() {
-      let totalValue = 0;
+      let totalValue = 0, val2570 = 0, val2571 = 0;
+      let valWon2570 = 0, valPending2570 = 0;
+      let activeCount = 0;
       let html = "";
       
       globalPipelines.forEach(p => {
-        totalValue += Number(p.projectValue) || 0;
+        let val = Number(p.projectValue) || 0;
+        let statusStr = String(p.status).toLowerCase();
         
-        let badgeColor = "bg-secondary";
-        if(p.fiscalYear == "2570") badgeColor = "bg-primary";
+        // ตรวจจับสถานะจาก Keyword
+        let isLost = lostKeywords.some(kw => statusStr.includes(kw));
+        let isWon = wonKeywords.some(kw => statusStr.includes(kw));
+        let isPending = pendingKeywords.some(kw => statusStr.includes(kw));
+        
+        // การคำนวณยอดเงิน (ลบ/ไม่นำมูลค่า 'ไม่ได้งาน/ปิดงาน' มารวม)
+        if (!isLost) {
+          totalValue += val;
+          activeCount++;
+          
+          if (p.fiscalYear == "2570") {
+            val2570 += val;
+            if (isWon) valWon2570 += val;
+            if (isPending) valPending2570 += val;
+          } else if (p.fiscalYear == "2571") {
+            val2571 += val;
+          }
+        }
+        
+        // ตรวจสอบการอัปเดตข้อมูล (เปรียบเทียบกับ Cache ในมือถือ)
+        let isUpdated = false;
+        let currentDataString = JSON.stringify(p);
+        let savedDataString = localStorage.getItem('proj_' + p.projectId);
+        if (savedDataString !== currentDataString) { isUpdated = true; }
+        
+        // จัดการสีและสไตล์ของการ์ด (ถ้า Lost ให้ทำสีเทาอ่อนๆ และเปลี่ยนสีกรอบ)
+        let cardOpacity = isLost ? 'opacity: 0.6; border-left-color: #6c757d;' : '';
+        let badgeColor = isLost ? 'bg-secondary' : (p.fiscalYear == "2570" ? "bg-primary" : "bg-dark");
+        let statusTextColor = isLost ? 'text-danger' : 'text-dark';
+        let updateBadgeHtml = isUpdated ? `<span class="badge bg-danger rounded-pill badge-update">🔴 อัปเดต</span>` : "";
         
         html += `
-        <div class="card project-card p-3" onclick="openForm('edit', '${p.projectId}')">
+        <div class="card project-card p-3" style="${cardOpacity}" onclick="openForm('edit', '${p.projectId}')">
+          ${updateBadgeHtml}
           <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="text-dark fw-bold mb-0 text-truncate" style="max-width: 70%;">${p.projectName}</h6>
+            <h6 class="${statusTextColor} fw-bold mb-0 text-truncate" style="max-width: 70%;">${p.projectName}</h6>
             <span class="badge ${badgeColor}">ปี ${p.fiscalYear}</span>
           </div>
           <div class="text-muted small mb-2">
             ลูกค้า: ${p.customer} | โอกาส: <span class="text-success fw-bold">${p.probability}</span>
           </div>
           <div class="d-flex justify-content-between align-items-end mt-1">
-            <span class="badge bg-light text-dark border">${p.status}</span>
-            <span class="text-primary fw-bold">฿${Number(p.projectValue).toLocaleString('th-TH')}</span>
+            <span class="badge bg-light ${statusTextColor} border text-truncate" style="max-width: 50%; ${isLost ? 'border-color:#dc3545!important;' : ''}">${p.status}</span>
+            <span class="text-primary fw-bold ${isLost ? 'text-decoration-line-through text-muted' : ''}">฿${val.toLocaleString('th-TH')}</span>
           </div>
         </div>`;
       });
 
-      if(globalPipelines.length === 0) {
-        html = `<div class="text-center text-muted mt-5"><p>ยังไม่มีโครงการในกองของคุณ</p></div>`;
-      }
+      if(globalPipelines.length === 0) { html = `<div class="text-center text-muted mt-5"><p>ยังไม่มีโครงการในกองของคุณ</p></div>`; }
 
-      document.getElementById('dash-total-count').innerText = globalPipelines.length;
-      document.getElementById('dash-total-value').innerText = totalValue.toLocaleString('th-TH');
-      document.getElementById('pipeline-list').innerHTML = html;
+      // แสดงผลตัวเลข
+      document.getElementById('dash-active-count').innerText = activeCount;
+      document.getElementById('dash-total-value').innerText = formatShortNumber(totalValue);
+      document.getElementById('dash-val-2570').innerText = formatShortNumber(val2570);
+      document.getElementById('dash-val-2571').innerText = formatShortNumber(val2571);
+      document.getElementById('dash-val-won').innerText = formatShortNumber(valWon2570);
+      document.getElementById('dash-val-pending').innerText = formatShortNumber(valPending2570);
       
+      document.getElementById('pipeline-list').innerHTML = html;
       showPage('page-staff-dashboard');
     }
 
-    // ==========================================
-    // ส่วนการจัดการ Form (New / Edit)
-    // ==========================================
+    // แปลงตัวเลขหลักล้านเป็น M
+    function formatShortNumber(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(2) + "M";
+      return num.toLocaleString('th-TH');
+    }
+
     function openForm(mode, projectId = "") {
       const form = document.getElementById('pipelineForm');
       form.reset(); 
-      
       document.getElementById('staff-uid').value = userProfile.userId;
       document.getElementById('staff-name').value = userProfile.displayName;
       document.getElementById('form-division').value = userDivision; 
@@ -249,6 +301,9 @@
         
         const p = globalPipelines.find(item => item.projectId === projectId);
         if(p) {
+          // เคลียร์ป้าย 🔴 อัปเดต ออกทันทีที่กดอ่าน
+          localStorage.setItem('proj_' + p.projectId, JSON.stringify(p));
+
           document.getElementById('project-id').value = p.projectId;
           document.getElementById('projectName').value = p.projectName;
           document.getElementById('customer').value = p.customer;
@@ -292,10 +347,7 @@
       }
     }
 
-    // ==========================================
-    // Utilities
-    // ==========================================
-    async function handleRegister(e) { e.preventDefault(); alert("ลงทะเบียนชั่วคราวถูกปิดใช้งานในเวอร์ชันนี้"); }
+    async function handleRegister(e) { e.preventDefault(); alert("ลงทะเบียนชั่วคราวถูกปิดใช้งาน"); }
     
     async function loadDropdowns(targetMode) {
       try {

@@ -454,10 +454,25 @@
     function populateSelect(elementId, arrayData) {
       const select = document.getElementById(elementId);
       if(!select) return;
-      select.innerHTML = select.options[0].outerHTML; // เก็บ <option> แรกไว้ ("-- เลือก --" หรือ "ทุกสถานะ")
+      
+      // ล้างข้อมูลเดิมทั้งหมดก่อน
+      select.innerHTML = '';
+      
+      // สร้าง Option อันแรก (Default) ให้เหมาะสมกับแต่ละกล่อง
+      let defaultOption = document.createElement('option');
+      defaultOption.value = "";
+      if(elementId === 'filter-status') defaultOption.text = "ทุกสถานะโครงการ";
+      else if(elementId === 'filter-division') defaultOption.text = "แสดงทุกกอง";
+      else defaultOption.text = "-- เลือก --";
+      
+      select.appendChild(defaultOption);
+
+      // วนลูปใส่ข้อมูลที่ดึงมาจากชีต
       arrayData.forEach(item => {
         let option = document.createElement('option');
-        option.value = item; option.text = item; select.appendChild(option);
+        option.value = item; 
+        option.text = item; 
+        select.appendChild(option);
       });
     }
 

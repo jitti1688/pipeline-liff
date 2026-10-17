@@ -32,14 +32,12 @@
          หน้า Dashboard สำหรับ Staff 
     =============================================== -->
     <div id="page-staff-dashboard" class="page-section">
-      <!-- กล่องสรุปผล -->
       <div class="card p-3 summary-box">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h5 class="mb-0 text-white">กอง: <span id="dash-division"></span></h5>
           <span class="badge bg-light text-primary">Staff</span>
         </div>
         
-        <!-- สรุปแถวที่ 1: ภาพรวมทั้งหมด (ไม่รวมปิดงาน) -->
         <div class="row text-center mt-2 pb-2 border-bottom border-light border-opacity-25">
           <div class="col-6 border-end border-light border-opacity-25">
             <p class="mb-0 text-white-50" style="font-size: 0.85rem;">เป้าปี 2570</p>
@@ -51,7 +49,6 @@
           </div>
         </div>
 
-        <!-- สรุปแถวที่ 2: แยกสถานะปี 2570 และปีถัดไป -->
         <div class="row text-center mt-2 pt-1">
           <div class="col-4 border-end border-light border-opacity-25">
             <p class="mb-0 text-warning" style="font-size: 0.70rem;">พิจารณาผล (2570)</p>
@@ -73,7 +70,6 @@
         <button class="btn btn-sm btn-line px-3 rounded-pill" onclick="openForm('new')">+ เพิ่มโครงการ</button>
       </div>
 
-      <!-- ลิสต์แสดงโครงการ -->
       <div id="pipeline-list"></div>
     </div>
 
@@ -83,7 +79,8 @@
     <div id="page-staff-form" class="page-section card p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="text-primary mb-0" id="form-title">สร้างโครงการใหม่</h5>
-        <button class="btn btn-sm btn-outline-secondary" onclick="showPage('page-staff-dashboard')">กลับ</button>
+        <!-- ✅ แก้ไขที่ 1: เปลี่ยน onclick ให้ไปเรียก renderDashboard() แทนโชว์หน้าเฉยๆ เพื่อเคลียร์ป้ายแดง -->
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="renderDashboard()">กลับ</button>
       </div>
       
       <form id="pipelineForm" onsubmit="handleFormSubmit(event)">
@@ -114,14 +111,12 @@
   </div>
 
   <script>
-    // === URL จาก Google Apps Script ===
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8lZ5hYGd72O1kxiwgzLOflzzEedb_77HDnC4IXclsUO91aGIDTmASAh4CYsRTFO-j/exec"; 
 
     let userProfile = null;
     let globalPipelines = []; 
     let userDivision = "";
 
-    // คีย์เวิร์ดสำหรับตรวจจับสถานะ เพื่อใช้กรองยอดเงิน (ปรับแก้คำในวงเล็บให้ตรงกับชีตของคุณได้)
     const wonKeywords = ["ได้งานแล้ว", "ลงนาม", "เซ็นสัญญา", "win", "success"];
     const pendingKeywords = ["อยู่ระหว่างการพิจารณาผล", "พิจารณา", "กำลังพิจารณา", "pending"];
     const lostKeywords = ["ไม่ได้งาน/ปิดงาน", "ไม่ได้งาน", "ปิดงาน", "ยกเลิก", "lost", "cancel"];
@@ -186,7 +181,6 @@
 
     function sortPipelines(data) {
       return data.sort((a, b) => {
-        // ให้สถานะ "ไม่ได้งาน/ปิดงาน" ไปอยู่ล่างสุดเสมอ
         const aIsLost = lostKeywords.some(kw => String(a.status).toLowerCase().includes(kw));
         const bIsLost = lostKeywords.some(kw => String(b.status).toLowerCase().includes(kw));
         if (aIsLost && !bIsLost) return 1;
@@ -214,16 +208,13 @@
         let val = Number(p.projectValue) || 0;
         let statusStr = String(p.status).toLowerCase();
         
-        // ตรวจจับสถานะจาก Keyword
         let isLost = lostKeywords.some(kw => statusStr.includes(kw));
         let isWon = wonKeywords.some(kw => statusStr.includes(kw));
         let isPending = pendingKeywords.some(kw => statusStr.includes(kw));
         
-        // การคำนวณยอดเงิน (ลบ/ไม่นำมูลค่า 'ไม่ได้งาน/ปิดงาน' มารวม)
         if (!isLost) {
           totalValue += val;
           activeCount++;
-          
           if (p.fiscalYear == "2570") {
             val2570 += val;
             if (isWon) valWon2570 += val;
@@ -233,13 +224,11 @@
           }
         }
         
-        // ตรวจสอบการอัปเดตข้อมูล (เปรียบเทียบกับ Cache ในมือถือ)
         let isUpdated = false;
         let currentDataString = JSON.stringify(p);
         let savedDataString = localStorage.getItem('proj_' + p.projectId);
         if (savedDataString !== currentDataString) { isUpdated = true; }
         
-        // จัดการสีและสไตล์ของการ์ด (ถ้า Lost ให้ทำสีเทาอ่อนๆ และเปลี่ยนสีกรอบ)
         let cardOpacity = isLost ? 'opacity: 0.6; border-left-color: #6c757d;' : '';
         let badgeColor = isLost ? 'bg-secondary' : (p.fiscalYear == "2570" ? "bg-primary" : "bg-dark");
         let statusTextColor = isLost ? 'text-danger' : 'text-dark';
@@ -264,7 +253,6 @@
 
       if(globalPipelines.length === 0) { html = `<div class="text-center text-muted mt-5"><p>ยังไม่มีโครงการในกองของคุณ</p></div>`; }
 
-      // แสดงผลตัวเลข
       document.getElementById('dash-active-count').innerText = activeCount;
       document.getElementById('dash-total-value').innerText = formatShortNumber(totalValue);
       document.getElementById('dash-val-2570').innerText = formatShortNumber(val2570);
@@ -276,7 +264,6 @@
       showPage('page-staff-dashboard');
     }
 
-    // แปลงตัวเลขหลักล้านเป็น M
     function formatShortNumber(num) {
       if (num >= 1000000) return (num / 1000000).toFixed(2) + "M";
       return num.toLocaleString('th-TH');
@@ -285,6 +272,11 @@
     function openForm(mode, projectId = "") {
       const form = document.getElementById('pipelineForm');
       form.reset(); 
+      
+      // ✅ แก้ไขที่ 2: ปลดล็อกปุ่มบันทึกทุกครั้งที่มีการเปิดหน้าฟอร์ม
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.disabled = false;
+
       document.getElementById('staff-uid').value = userProfile.userId;
       document.getElementById('staff-name').value = userProfile.displayName;
       document.getElementById('form-division').value = userDivision; 
@@ -293,15 +285,14 @@
         document.getElementById('form-title').innerText = "สร้างโครงการใหม่";
         document.getElementById('form-mode').value = "new";
         document.getElementById('project-id').value = "";
-        document.getElementById('btnSubmit').innerText = "บันทึกข้อมูลใหม่";
+        btnSubmit.innerText = "บันทึกข้อมูลใหม่";
       } else {
         document.getElementById('form-title').innerText = "แก้ไขโครงการ";
         document.getElementById('form-mode').value = "edit";
-        document.getElementById('btnSubmit').innerText = "อัปเดตข้อมูล";
+        btnSubmit.innerText = "อัปเดตข้อมูล";
         
         const p = globalPipelines.find(item => item.projectId === projectId);
         if(p) {
-          // เคลียร์ป้าย 🔴 อัปเดต ออกทันทีที่กดอ่าน
           localStorage.setItem('proj_' + p.projectId, JSON.stringify(p));
 
           document.getElementById('project-id').value = p.projectId;
@@ -320,8 +311,10 @@
 
     async function handleFormSubmit(event) {
       event.preventDefault();
-      document.getElementById('btnSubmit').disabled = true;
-      document.getElementById('btnSubmit').innerText = 'กำลังประมวลผล...';
+      
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = 'กำลังประมวลผล...';
       
       const form = document.getElementById('pipelineForm');
       const dataObj = Object.fromEntries(new FormData(form).entries());
@@ -334,16 +327,20 @@
           body: JSON.stringify({ action: actionType, payload: dataObj })
         });
         const result = await res.json();
+        
+        // ✅ แก้ไขที่ 3: ปลดล็อกปุ่มหลังจากบันทึกข้อมูลสำเร็จ
+        btnSubmit.disabled = false;
+
         if(result.success) { 
           alert(isNew ? 'เพิ่มโครงการสำเร็จ!' : 'อัปเดตโครงการสำเร็จ!');
           loadStaffDashboard(userDivision); 
         } else { 
           alert('ล้มเหลว: ' + result.message); 
-          document.getElementById('btnSubmit').disabled = false;
         }
       } catch(e) {
         alert("เกิดข้อผิดพลาด: " + e);
-        document.getElementById('btnSubmit').disabled = false;
+        // ✅ แก้ไขที่ 4: ปลดล็อกปุ่มกรณีเกิด Error (เน็ตหลุด)
+        btnSubmit.disabled = false;
       }
     }
 

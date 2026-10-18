@@ -34,8 +34,6 @@
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     
     .app-header { background: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 1px solid #eee; margin-bottom: 20px; border-radius: 0 0 15px 15px; }
-    
-    /* ตกแต่งกล่องประวัติอัปเดต */
     .audit-trail-box { background-color: #e9ecef; border-left: 4px solid #6c757d; font-size: 0.85rem; }
   </style>
 </head>
@@ -94,7 +92,6 @@
         </div>
       </div>
 
-      <!-- กล่องค้นหาและกรอง (Advanced Filter) -->
       <div class="card p-3 mb-3 bg-white shadow-sm border border-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h6 class="text-secondary fw-bold mb-0" style="font-size: 0.95rem;"><i class="fas fa-filter me-1"></i> ตัวกรองข้อมูล</h6>
@@ -125,8 +122,10 @@
 
       <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
         <h6 class="text-secondary fw-bold mb-0">รายการ (<span id="dash-active-count">0</span>)</h6>
-        <div>
-          <button class="btn btn-sm btn-outline-success rounded-pill me-1" onclick="exportToExcel()" title="ส่งออกเป็น Excel"><i class="fas fa-file-excel"></i> Export</button>
+        <div class="d-flex">
+          <!-- ปุ่ม Refresh Data -->
+          <button class="btn btn-sm btn-outline-primary rounded-pill me-1 shadow-sm" onclick="loadDashboardData()" title="โหลดข้อมูลใหม่"><i class="fas fa-sync-alt"></i></button>
+          <button class="btn btn-sm btn-outline-success rounded-pill me-1 shadow-sm" onclick="exportToExcel()" title="ส่งออกเป็น Excel"><i class="fas fa-file-excel"></i> Export</button>
           <button class="btn btn-sm btn-line rounded-pill px-3 shadow-sm" onclick="openForm('new')"><i class="fas fa-plus"></i> เพิ่มงาน</button>
         </div>
       </div>
@@ -148,7 +147,6 @@
           <input type="hidden" id="project-id" name="projectId">
           <input type="hidden" id="form-mode" value="new"> 
           
-          <!-- ส่วนจัดการเจ้าของโครงการ -->
           <div id="form-owner-readonly" class="mb-3">
             <label class="form-label text-muted small fw-bold mb-1"><i class="fas fa-user-circle"></i> ผู้รับผิดชอบโครงการ</label>
             <input type="text" class="form-control bg-light text-primary fw-bold border-0" id="readonly-owner" readonly>
@@ -168,7 +166,6 @@
               <select class="form-select border-primary shadow-sm" id="assign-owner"></select>
             </div>
           </div>
-          <!-- สิ้นสุดส่วนจัดการเจ้าของ -->
 
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">ชื่อโครงการ <span class="text-danger">*</span></label><input type="text" class="form-control" id="projectName" name="projectName" required></div>
           <div class="row">
@@ -181,7 +178,6 @@
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">โอกาสความน่าจะเป็น <span class="text-danger">*</span></label><select class="form-select" id="form-probability" name="probability" required></select></div>
           <div class="mb-3"><label class="form-label text-muted small fw-bold mb-1">บันทึกเพิ่มเติม</label><textarea class="form-control" id="remark" name="remark" rows="3"></textarea></div>
           
-          <!-- กล่องแสดงประวัติการอัปเดต -->
           <div id="update-info-container" class="audit-trail-box p-2 rounded mt-2 mb-3" style="display:none;">
             <div class="text-muted"><i class="fas fa-history me-1"></i> <span id="update-info-text"></span></div>
           </div>
@@ -256,14 +252,13 @@
   </div>
 
   <script>
-    // === 🚨 URL จาก Google Apps Script ===
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby8lZ5hYGd72O1kxiwgzLOflzzEedb_77HDnC4IXclsUO91aGIDTmASAh4CYsRTFO-j/exec"; 
 
     let userProfile = null;
     let globalPipelines = []; 
     let currentFilteredData = []; 
     let globalDivisions = []; 
-    let activeUsersList = []; // เก็บรายชื่อพนักงานทั้งหมดสำหรับให้ Manager/Admin เลือก
+    let activeUsersList = [];
     let userRole = "";
     let userDivision = "";
     let userUid = "";
@@ -307,7 +302,7 @@
             if(userRole === 'Reporter') document.getElementById('reporter-toggle-container').style.display = 'block';
             if(userRole === 'Manager' || userRole === 'Admin') {
               document.getElementById('manager-div-filter-container').style.display = 'block';
-              loadActiveUsers(); // โหลดรายชื่อพนักงานเตรียมไว้ให้ Assign งาน
+              loadActiveUsers();
             }
             if(userRole === 'Admin') document.getElementById('btn-admin-panel').style.display = 'inline-block';
 
@@ -318,7 +313,6 @@
       } catch(e) { Swal.fire('ข้อผิดพลาด', 'เซิร์ฟเวอร์ไม่ตอบสนอง', 'error'); }
     }
 
-    // ดึงรายชื่อพนักงานทั้งหมด (สำหรับ Manager/Admin ใช้ Assign งาน)
     async function loadActiveUsers() {
       try {
         const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getActiveUsers' }) });
@@ -354,13 +348,11 @@
         const bIsLost = lostKeywords.some(kw => String(b.status).toLowerCase().includes(kw));
         if (aIsLost && !bIsLost) return 1;
         if (!aIsLost && bIsLost) return -1;
-
         const aIs2570 = (a.fiscalYear == "2570");
         const bIs2570 = (b.fiscalYear == "2570");
         if (aIs2570 && !bIs2570) return -1;
         if (!aIs2570 && bIs2570) return 1;
         if (a.fiscalYear !== b.fiscalYear) return b.fiscalYear > a.fiscalYear ? 1 : -1;
-        
         let probA = parseInt(String(a.probability).replace(/\D/g, '')) || 0;
         let probB = parseInt(String(b.probability).replace(/\D/g, '')) || 0;
         return probB - probA;
@@ -393,13 +385,11 @@
       if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
       if (probFilter) filtered = filtered.filter(p => p.probability === probFilter);
       if (yearFilter) filtered = filtered.filter(p => String(p.fiscalYear) === String(yearFilter));
-      
       if (userRole === 'Reporter' && document.getElementById('reporter-toggle').checked) filtered = filtered.filter(p => p.uid === userUid);
       if (userRole === 'Manager' || userRole === 'Admin') {
         const divFilter = document.getElementById('filter-division').value;
         if (divFilter) filtered = filtered.filter(p => p.division === divFilter);
       }
-
       currentFilteredData = filtered; 
       renderDashboard(filtered);
     }
@@ -461,8 +451,25 @@
       return num.toLocaleString('th-TH');
     }
 
+    // 🌟 ระบบ Export Excel ใหม่ (ดักจับการใช้งานในแอป LINE)
     function exportToExcel() {
-      if(currentFilteredData.length === 0) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลสำหรับส่งออก Excel', 'warning'); return; }
+      if(currentFilteredData.length === 0) { Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลสำหรับส่งออก', 'warning'); return; }
+      
+      // ดักจับแอป LINE ป้องกันบั๊กดาวน์โหลดไฟล์ไม่ได้
+      if(liff.isInClient()) {
+        Swal.fire({
+          title: 'ข้อจำกัดของแอป LINE',
+          text: 'แอป LINE ไม่อนุญาตให้ดาวน์โหลดไฟล์โดยตรง กรุณากดปุ่มด้านล่างเพื่อเปิดระบบในเบราว์เซอร์ของมือถือแทน (Safari/Chrome)',
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: '<i class="fas fa-external-link-alt me-1"></i> เปิดในเบราว์เซอร์',
+          cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+          if (result.isConfirmed) liff.openWindow({ url: window.location.href, external: true });
+        });
+        return;
+      }
+
       Swal.fire({ title: 'กำลังสร้างไฟล์ Excel...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
       setTimeout(() => {
         const exportData = currentFilteredData.map(p => ({
@@ -478,20 +485,17 @@
       }, 500); 
     }
 
-    // เมื่อ Manager/Admin เปลี่ยนกองในกล่อง Assign ให้โหลดรายชื่อพนักงานกองนั้น
     function updateAssignOwnerDropdown() {
       const div = document.getElementById('assign-division').value;
       const ownerSelect = document.getElementById('assign-owner');
       ownerSelect.innerHTML = '';
-      
       const usersInDiv = activeUsersList.filter(u => u.division === div);
       if (usersInDiv.length === 0) {
         ownerSelect.innerHTML = '<option value="">-- ไม่มีพนักงานในกองนี้ --</option>';
       } else {
         usersInDiv.forEach(u => {
           let opt = document.createElement('option');
-          opt.value = u.uid; opt.text = u.name;
-          ownerSelect.appendChild(opt);
+          opt.value = u.uid; opt.text = u.name; ownerSelect.appendChild(opt);
         });
       }
     }
@@ -503,7 +507,6 @@
       const form = document.getElementById('pipelineForm'); form.reset(); 
       const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.disabled = false;
       
-      // จัดการการแสดงผลกล่องเจ้าของโครงการ (Admin/Manager vs Staff/Reporter)
       if (userRole === 'Manager' || userRole === 'Admin') {
         document.getElementById('form-owner-readonly').style.display = 'none';
         document.getElementById('form-owner-assign').style.display = 'flex';
@@ -520,12 +523,12 @@
         document.getElementById('form-title').innerHTML = "<i class='fas fa-plus-circle me-2'></i>สร้างโครงการใหม่";
         document.getElementById('form-mode').value = "new"; document.getElementById('project-id').value = "";
         btnSubmit.innerHTML = "<i class='fas fa-save me-2'></i>บันทึกข้อมูลใหม่";
-        document.getElementById('update-info-container').style.display = 'none'; // ซ่อนประวัติอัปเดตตอนสร้างใหม่
+        document.getElementById('update-info-container').style.display = 'none';
 
         if (userRole === 'Manager' || userRole === 'Admin') {
           document.getElementById('assign-division').value = userDivision;
           updateAssignOwnerDropdown();
-          document.getElementById('assign-owner').value = userUid; // Default เป็นตัวเองก่อน
+          document.getElementById('assign-owner').value = userUid; 
         } else {
           document.getElementById('readonly-owner').value = userNameReal + " (" + userDivision + ")";
         }
@@ -537,12 +540,12 @@
         
         const p = globalPipelines.find(item => item.projectId === projectId);
         if(p) {
-          localStorage.setItem('proj_' + p.projectId, JSON.stringify(p)); // ลบป้าย 🔴 อัปเดตออก
+          localStorage.setItem('proj_' + p.projectId, JSON.stringify(p));
 
           if (userRole === 'Manager' || userRole === 'Admin') {
             document.getElementById('assign-division').value = p.division;
             updateAssignOwnerDropdown();
-            document.getElementById('assign-owner').value = p.uid; // Set ให้ตรงกับเจ้าของเดิม
+            document.getElementById('assign-owner').value = p.uid; 
           } else {
             document.getElementById('readonly-owner').value = p.ownerName + " (" + p.division + ")";
           }
@@ -553,7 +556,6 @@
           document.getElementById('form-status').value = p.status; document.getElementById('form-probability').value = p.probability;
           document.getElementById('remark').value = p.remark;
 
-          // แสดงข้อมูลอัปเดตล่าสุด
           if (p.updatedAt) {
             let dt = new Date(p.updatedAt);
             let dateStr = dt.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -571,23 +573,18 @@
       event.preventDefault();
       const btnSubmit = document.getElementById('btnSubmit'); btnSubmit.disabled = true;
       Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
-      
       const form = document.getElementById('pipelineForm');
       const dataObj = Object.fromEntries(new FormData(form).entries());
       const isNew = document.getElementById('form-mode').value === "new";
       const actionType = isNew ? 'saveData' : 'updateData';
 
-      // ดึงค่าการ Assign ของ Manager/Admin ไปบันทึก
       if (userRole === 'Manager' || userRole === 'Admin') {
         const ownerSelect = document.getElementById('assign-owner');
         if(!ownerSelect.value) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกผู้รับผิดชอบโครงการ', 'warning'); btnSubmit.disabled = false; return; }
-        
         dataObj.division = document.getElementById('assign-division').value;
         dataObj.uid = ownerSelect.value;
         dataObj.ownerName = ownerSelect.options[ownerSelect.selectedIndex].text;
       }
-
-      // บันทึกชื่อผู้ที่ทำการกดอัปเดตครั้งนี้ (เพื่อทำ Audit Trail)
       dataObj.updaterName = userNameReal; 
       
       try {
@@ -610,13 +607,11 @@
     function renderAdminUsers(users) {
       const pendingList = document.getElementById('admin-list-pending'); const approvedList = document.getElementById('admin-list-approved');
       let pendingHtml = "", approvedHtml = "", pendingCount = 0;
-
       users.forEach(u => {
         let safeName = String(u.name).replace(/'/g, "\\'");
         let badgeStyle = u.role === 'Admin' ? 'bg-danger' : (u.role === 'Manager' ? 'bg-info' : 'bg-secondary');
         let statusBadge = u.status === 'Pending' ? '<span class="badge bg-warning text-dark shadow-sm">รออนุมัติ</span>' : (u.status === 'Rejected' ? '<span class="badge bg-dark shadow-sm">ระงับสิทธิ์</span>' : `<span class="badge bg-success shadow-sm">ใช้งานปกติ</span>`);
         let lineNameHtml = u.lineName ? `<div class="text-success small mt-1"><i class="fab fa-line"></i> ${u.lineName}</div>` : '';
-                         
         let cardHtml = `
           <div class="card user-card p-3 shadow-sm" onclick="openAdminUserModal('${u.uid}', '${safeName}', '${u.division}', '${u.role}', '${u.status}')">
             <div class="d-flex justify-content-between align-items-start mb-1">
@@ -628,7 +623,6 @@
       });
       if(pendingCount === 0) pendingHtml = `<div class="text-center text-muted mt-5"><i class="fas fa-check-circle mb-3" style="font-size:3rem; opacity:0.3;"></i><p>ไม่มีผู้ใช้งานรออนุมัติ</p></div>`;
       if(approvedHtml === "") approvedHtml = `<div class="text-center text-muted mt-5"><i class="fas fa-users mb-3" style="font-size:3rem; opacity:0.3;"></i><p>ไม่มีผู้ใช้งานในระบบ</p></div>`;
-
       document.getElementById('badge-pending-count').innerText = pendingCount; pendingList.innerHTML = pendingHtml; approvedList.innerHTML = approvedHtml;
     }
 
@@ -647,9 +641,7 @@
       try {
         const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'updateUser', payload: payload }) });
         const result = await res.json();
-        if(result.success) {
-          bootstrap.Modal.getInstance(document.getElementById('userEditModal')).hide();
-          Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false }); loadAdminPanel();
+        if(result.success) { bootstrap.Modal.getInstance(document.getElementById('userEditModal')).hide(); Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false }); loadAdminPanel();
         } else { Swal.fire('ล้มเหลว', result.message, 'error'); }
       } catch(e) { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อได้', 'error'); }
     }
